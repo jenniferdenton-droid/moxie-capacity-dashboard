@@ -606,7 +606,7 @@
         <div style="font-size:11px;color:var(--muted);margin-top:2px">Pull new account projections by segment from your planning Google Sheet. Expected format: rows = months Jan–Dec, columns = Enterprise / Gold / Silver / Momentum / Growth</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <input class="growth-range-input" id="growthSheetRange" placeholder="GrowthPlan!B2:F13" title="Range in your planning GSheet: rows=months, cols=segments">
+        <input class="growth-range-input" id="growthSheetRange" placeholder="'Monthly Targets'!B403:M407" title="Range: 5 segment rows (Beginner/Experienced/Growth/Silver/Enterprise) × 12 month cols">
         <button class="gsheet-growth-btn" onclick="syncGrowthFromSheet()">
           <span id="growthSyncSpinner" class="spinner hidden"></span>
           <span id="growthSyncLabel">↻ Sync Growth Plan</span>
@@ -650,7 +650,7 @@
     <div class="card">
       <div class="card-title" style="justify-content:space-between">
         New Accounts Launching per Month by Segment
-        <button class="reset-btn" style="margin:0;padding:5px 12px;font-size:11px" onclick="clearGrowthPlan()">Clear Plan</button>
+        <button class="reset-btn" style="margin:0;padding:5px 12px;font-size:11px" onclick="clearGrowthPlan()">↺ Reset to Plan</button>
       </div>
       <div style="overflow-x:auto">
         <table class="growth-plan-table" id="growthPlanTable">
@@ -1637,7 +1637,23 @@ const GROWTH_DEFAULTS = {
 const GROWTH_SEGS = ['Enterprise','Gold','Silver','Momentum','Growth'];
 
 // 12×5 grid: newPlan[monthIdx][segName] = # new accounts
-let growthPlan = MONTHS.map(() => Object.fromEntries(GROWTH_SEGS.map(s => [s, 0])));
+// Pre-populated from GSheet "Monthly Targets" tab (rows 403-409)
+// Mapping: Beginner→Momentum, Experienced→Gold
+let growthPlan = [
+  // Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
+  { Enterprise: 3,  Gold: 8,  Silver: 3,  Momentum: 6,  Growth: 4  }, // Jan
+  { Enterprise: 4,  Gold: 13, Silver: 8,  Momentum: 6,  Growth: 4  }, // Feb
+  { Enterprise: 6,  Gold: 9,  Silver: 8,  Momentum: 6,  Growth: 7  }, // Mar
+  { Enterprise: 6,  Gold: 10, Silver: 7,  Momentum: 9,  Growth: 6  }, // Apr
+  { Enterprise: 6,  Gold: 11, Silver: 8,  Momentum: 11, Growth: 7  }, // May
+  { Enterprise: 8,  Gold: 10, Silver: 9,  Momentum: 12, Growth: 8  }, // Jun
+  { Enterprise: 8,  Gold: 11, Silver: 9,  Momentum: 11, Growth: 8  }, // Jul
+  { Enterprise: 10, Gold: 9,  Silver: 7,  Momentum: 10, Growth: 6  }, // Aug
+  { Enterprise: 10, Gold: 11, Silver: 9,  Momentum: 9,  Growth: 8  }, // Sep
+  { Enterprise: 11, Gold: 13, Silver: 10, Momentum: 11, Growth: 9  }, // Oct
+  { Enterprise: 13, Gold: 12, Silver: 10, Momentum: 14, Growth: 9  }, // Nov
+  { Enterprise: 15, Gold: 15, Silver: 10, Momentum: 14, Growth: 9  }, // Dec
+]; // Totals: 100 / 132 / 98 / 119 / 85 = 534 new accounts YTD
 
 function getGrowthAssumptions() {
   const n = (id) => parseFloat(document.getElementById(id)?.value) || 0;
@@ -1783,7 +1799,21 @@ function updateGrowthPlan(monthIdx, seg, val) {
 }
 
 function clearGrowthPlan() {
-  growthPlan = MONTHS.map(() => Object.fromEntries(GROWTH_SEGS.map(s => [s, 0])));
+  // Reset to planning doc targets (not zeros)
+  growthPlan = [
+    { Enterprise: 3,  Gold: 8,  Silver: 3,  Momentum: 6,  Growth: 4  },
+    { Enterprise: 4,  Gold: 13, Silver: 8,  Momentum: 6,  Growth: 4  },
+    { Enterprise: 6,  Gold: 9,  Silver: 8,  Momentum: 6,  Growth: 7  },
+    { Enterprise: 6,  Gold: 10, Silver: 7,  Momentum: 9,  Growth: 6  },
+    { Enterprise: 6,  Gold: 11, Silver: 8,  Momentum: 11, Growth: 7  },
+    { Enterprise: 8,  Gold: 10, Silver: 9,  Momentum: 12, Growth: 8  },
+    { Enterprise: 8,  Gold: 11, Silver: 9,  Momentum: 11, Growth: 8  },
+    { Enterprise: 10, Gold: 9,  Silver: 7,  Momentum: 10, Growth: 6  },
+    { Enterprise: 10, Gold: 11, Silver: 9,  Momentum: 9,  Growth: 8  },
+    { Enterprise: 11, Gold: 13, Silver: 10, Momentum: 11, Growth: 9  },
+    { Enterprise: 13, Gold: 12, Silver: 10, Momentum: 14, Growth: 9  },
+    { Enterprise: 15, Gold: 15, Silver: 10, Momentum: 14, Growth: 9  },
+  ];
   buildGrowthPlanTable();
   renderGrowth();
 }
@@ -1927,7 +1957,12 @@ async function syncGrowthFromSheet() {
     alert('Please configure your Google Sheet ID and API Key first (⚙ GSheet Config button).');
     return;
   }
-  const range = document.getElementById('growthSheetRange').value.trim() || 'GrowthPlan!B2:F13';
+  // Planning sheet column order (rows 403-409, Monthly Targets tab):
+  // Col B=Beginner(→Momentum), C=Experienced(→Gold), D=Growth, E=Silver, F=Enterprise
+  // Default range covers 5 data rows × 12 months (transposed: rows=segments, cols=months)
+  // Actual layout: each ROW is a segment, each COL is a month (Jan-Dec)
+  // We read 5 rows (one per segment) × 12 cols (one per month)
+  const range = document.getElementById('growthSheetRange').value.trim() || "'Monthly Targets'!B403:M407";
   const spinner = document.getElementById('growthSyncSpinner');
   const label = document.getElementById('growthSyncLabel');
   spinner.classList.remove('hidden'); label.textContent = ' Syncing…';
@@ -1939,24 +1974,26 @@ async function syncGrowthFromSheet() {
     const data = await res.json();
     const rows = data.values || [];
 
-    // Expect rows[i] = [Enterprise, Gold, Silver, Momentum, Growth] for month i
-    let updated = 0;
-    rows.forEach((row, i) => {
-      if (i < 12) {
-        GROWTH_SEGS.forEach((seg, j) => {
-          const val = parseInt(row[j]) || 0;
-          growthPlan[i][seg] = val;
-          const el = document.getElementById(`gp_${i}_${seg}`);
-          if (el) el.value = val;
-          updated++;
-        });
-      }
-    });
-    document.getElementById('growthSyncStatus').textContent = `Synced ${rows.length} months · ${new Date().toLocaleTimeString()}`;
+    // Planning sheet layout: rows = segments (Beginner/Experienced/Growth/Silver/Enterprise)
+    //                         cols = months (Jan through Dec)
+    // Map rows → dashboard segment names
+    const segMap = ['Momentum','Gold','Growth','Silver','Enterprise']; // Beginner→Momentum, Experienced→Gold
+
+    if (rows.length < 5) throw new Error(`Expected 5 segment rows, got ${rows.length}. Check range: ${range}`);
+
+    // Transpose: populate growthPlan[monthIdx][seg]
+    for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
+      segMap.forEach((seg, rowIdx) => {
+        const val = parseInt((rows[rowIdx] || [])[monthIdx]) || 0;
+        growthPlan[monthIdx][seg] = val;
+      });
+    }
+
+    document.getElementById('growthSyncStatus').textContent = `Synced 12 months × 5 segments · ${new Date().toLocaleTimeString()}`;
     buildGrowthPlanTable();
     renderGrowth();
   } catch(e) {
-    alert(`Growth plan sync failed: ${e.message}\n\nExpected range format: rows=Jan–Dec, cols=Enterprise/Gold/Silver/Momentum/Growth`);
+    alert(`Growth plan sync failed: ${e.message}\n\nDefault range: 'Monthly Targets'!B403:M407\n(5 segment rows × 12 month columns)`);
     document.getElementById('growthSyncStatus').textContent = 'Sync failed';
   } finally {
     spinner.classList.add('hidden'); label.textContent = '↻ Sync Growth Plan';
@@ -2020,7 +2057,7 @@ function saveConfig() {
     apiKey: document.getElementById('cfgApiKey').value.trim(),
     orderRange: document.getElementById('cfgOrderRange').value.trim() || 'Assumptions!B6',
     hcRange: document.getElementById('cfgHCRange').value.trim() || 'Assumptions!B13',
-    growthRange: document.getElementById('growthSheetRange').value.trim() || 'GrowthPlan!B2:F13',
+    growthRange: document.getElementById('growthSheetRange').value.trim() || "'Monthly Targets'!B403:M407",
   };
   localStorage.setItem('moxieCapConfig', JSON.stringify(cfg));
   document.getElementById('configPanel').classList.remove('open');
