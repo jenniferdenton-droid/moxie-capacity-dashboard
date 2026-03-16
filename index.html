@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moxie Supplies — Operations Capacity Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --primary: #1a2e4a;
+    --accent: #00b4d8;
+    --accent2: #0077b6;
+    --green: #2ecc71;
+    --yellow: #f39c12;
+    --red: #e74c3c;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --border: #dde3ea;
+    --text: #1a2e4a;
+    --muted: #6b7a8d;
+    --segment-gold: #f4a261;
+    --segment-enterprise: #e76f51;
+    --segment-silver: #90e0ef;
+    --segment-momentum: #48cae4;
+    --segment-growth: #0096c7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* ── TOP BAR ── */
+  .topbar { background: var(--primary); color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .topbar-brand { display: flex; align-items: center; gap: 12px; }
+  .topbar-title { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; }
+  .topbar-sub { font-size: 12px; opacity: 0.7; margin-top: 1px; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .sync-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
+  .sync-btn:hover { background: var(--accent2); }
+  .sync-status { font-size: 11px; opacity: 0.7; }
+  .config-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; }
+  .config-btn:hover { background: rgba(255,255,255,0.2); }
+
+  /* ── CONFIG PANEL ── */
+  .config-panel { display: none; background: #1a2e4a; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 16px 24px; color: #fff; }
+  .config-panel.open { display: block; }
+  .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; max-width: 900px; }
+  .config-field label { font-size: 11px; opacity: 0.7; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .config-field input { width: 100%; padding: 7px 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: #fff; font-size: 13px; }
+  .config-field input::placeholder { opacity: 0.4; }
+  .config-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+  .save-config-btn { background: var(--accent); color: #fff; border: none; border-radius: 5px; padding: 7px 16px; font-size: 13px; cursor: pointer; }
+  .config-note { font-size: 11px; opacity: 0.55; }
+
+  /* ── MAIN LAYOUT ── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 20px; }
+
+  /* ── KPI CARDS ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi-card { background: var(--card); border-radius: 10px; padding: 18px 20px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.yellow::before { background: var(--yellow); }
+  .kpi-card.red::before { background: var(--red); }
+  .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+  .kpi-value { font-size: 28px; font-weight: 700; line-height: 1; color: var(--primary); }
+  .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 5px; }
+  .kpi-badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-top: 4px; }
+  .badge-green { background: #e8f8f0; color: #1a7a45; }
+  .badge-yellow { background: #fff8e6; color: #b07a00; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+
+  /* ── MONTH SELECTOR ── */
+  .controls-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+  .controls-row label { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .month-select { padding: 7px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); font-size: 13px; cursor: pointer; color: var(--text); }
+  .view-toggle { display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .view-toggle button { padding: 7px 14px; background: none; border: none; cursor: pointer; font-size: 12px; font-weight: 500; color: var(--muted); transition: all 0.15s; }
+  .view-toggle button.active { background: var(--primary); color: #fff; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; gap: 2px; overflow-x: auto; }
+  .tab { padding: 10px 20px; background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: all 0.15s; }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* ── PANELS ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── CARDS & GRIDS ── */
+  .card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .chart-wrap { position: relative; height: 280px; }
+  .chart-wrap-sm { position: relative; height: 200px; }
+  .chart-wrap-lg { position: relative; height: 340px; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #f5f7fa; text-align: left; padding: 9px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); border-bottom: 1px solid var(--border); font-weight: 600; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .pill-green { background: #e8f8f0; color: #1a7a45; }
+  .pill-yellow { background: #fff8e6; color: #b07a00; }
+  .pill-red { background: #fdecea; color: #c0392b; }
+  .pill-blue { background: #e8f0ff; color: #1a4acc; }
+  .seg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+
+  /* ── ASSUMPTIONS ── */
+  .assumptions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .assume-section { background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 18px 20px; }
+  .assume-section h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent2); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .assume-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 12px; }
+  .assume-label { font-size: 13px; color: var(--text); flex: 1; }
+  .assume-note { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .assume-input { width: 90px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 5px; text-align: right; font-size: 13px; background: #fffbe6; color: var(--primary); font-weight: 600; }
+  .assume-input:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .recalc-btn { background: var(--accent2); color: #fff; border: none; border-radius: 6px; padding: 9px 22px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+  .recalc-btn:hover { background: var(--primary); }
+  .reset-btn { background: var(--card); color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 9px 16px; font-size: 13px; cursor: pointer; margin-top: 16px; margin-left: 8px; }
+
+  /* ── SEGMENT COLORS ── */
+  .seg-gold { color: #c77c3a; }
+  .seg-enterprise { color: #c0392b; }
+  .seg-silver { color: #0077b6; }
+  .seg-momentum { color: #0096c7; }
+  .seg-growth { color: #00b4d8; }
+
+  /* ── CAPACITY FLAG ── */
+  .flag { font-size: 13px; font-weight: 600; }
+  .flag-ok { color: var(--green); }
+  .flag-warn { color: var(--yellow); }
+  .flag-over { color: var(--red); }
+
+  /* ── FORECAST ── */
+  .forecast-insight { background: #e8f4fd; border-left: 4px solid var(--accent2); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 13px; margin-bottom: 16px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .kpi-value { font-size: 22px; }
+    .container { padding: 12px; }
+  }
+
+  /* ── GROWTH MODEL ── */
+  .growth-plan-table { border-collapse: collapse; font-size: 12px; width: 100%; }
+  .growth-plan-table th { background: #f5f7fa; padding: 7px 8px; text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--muted); border: 1px solid var(--border); white-space: nowrap; }
+  .growth-plan-table td { padding: 4px 4px; border: 1px solid #eef0f3; text-align: center; }
+  .growth-plan-table td:first-child { text-align: left; font-weight: 600; padding-left: 10px; white-space: nowrap; }
+  .growth-plan-table .seg-label { display: flex; align-items: center; gap: 6px; }
+  .growth-input { width: 48px; text-align: center; padding: 4px 4px; border: 1px solid var(--border); border-radius: 4px; background: #fffbe6; font-size: 12px; font-weight: 600; color: var(--primary); }
+  .growth-input:focus { outline: none; border-color: var(--accent); }
+  .growth-total-row td { background: #f5f7fa; font-weight: 700; font-size: 12px; }
+  .impact-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .impact-card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--muted); margin-bottom: 4px; }
+  .impact-card-value { font-size: 22px; font-weight: 700; color: var(--primary); }
+  .impact-card-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .impact-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .growth-seg-assume { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .growth-seg-assume h4 { font-size: 12px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .growth-assume-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 12px; }
+  .growth-assume-label { color: var(--muted); }
+  .growth-assume-input { width: 70px; text-align: right; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: #fffbe6; font-size: 12px; font-weight: 600; color: var(--primary); }
+  .growth-assume-input:focus { outline: none; border-color: var(--accent); }
+  .gsheet-growth-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .gsheet-growth-btn:hover { background: var(--accent2); }
+  .growth-range-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; width: 200px; }
+
+  /* ── SPINNER ── */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+
+  /* ── SECTION DIVIDER ── */
+  .section-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+
+  /* ── DRIVER FLAG BAR ── */
+  .driver-bar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .driver-chip { display: flex; align-items: center; gap: 8px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 12px; flex: 1; min-width: 200px; }
+  .driver-chip-icon { font-size: 18px; }
+  .driver-chip-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .driver-chip-value { font-weight: 700; font-size: 14px; color: var(--primary); }
+  .driver-chip-pct { font-size: 11px; color: var(--muted); }
+  .driver-chip.top-driver { border-color: #f39c12; border-left: 4px solid #f39c12; }
+  .driver-chip.top-segment { border-color: var(--accent2); border-left: 4px solid var(--accent2); }
+  .driver-chip.peak-month { border-color: var(--red); border-left: 4px solid var(--red); }
+
+  /* ── SPEND SECTION ── */
+  .spend-rank { display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; text-align: center; line-height: 22px; }
+  .spend-bar-wrap { background: #f0f4f8; border-radius: 4px; height: 8px; overflow: hidden; }
+  .spend-bar-fill { height: 8px; border-radius: 4px; background: var(--accent2); }
+
+  /* ── PHARMA LINES ── */
+  .pharma-dist-row { display: flex; gap: 4px; height: 20px; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+  .pharma-dist-seg { height: 100%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; cursor: default; }
+  .pharma-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .pharma-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .pharma-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div>
+      <div class="topbar-title">⚡ Moxie Supplies — Operations Capacity</div>
+      <div class="topbar-sub" id="subtitleBar">2026 Model · 9 OAs · 5 Business Segments · 13 Task Categories</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="sync-status" id="syncStatus">Not synced to GSheet</div>
+    <button class="sync-btn" id="syncBtn" onclick="syncFromGSheet()">
+      <span id="syncSpinner" class="spinner hidden"></span>
+      <span id="syncLabel">↻ Sync GSheet</span>
+    </button>
+    <button class="config-btn" onclick="toggleConfig()">⚙ GSheet Config</button>
+  </div>
+</div>
+
+<!-- ═══ CONFIG PANEL ═══ -->
+<div class="config-panel" id="configPanel">
+  <div class="config-grid">
+    <div class="config-field">
+      <label>Google Sheet ID</label>
+      <input type="text" id="cfgSheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
+    </div>
+    <div class="config-field">
+      <label>Google API Key</label>
+      <input type="password" id="cfgApiKey" placeholder="AIzaSy..." />
+    </div>
+    <div class="config-field">
+      <label>Order Volume Range (e.g. Assumptions!B6)</label>
+      <input type="text" id="cfgOrderRange" placeholder="Assumptions!B6" />
+    </div>
+    <div class="config-field">
+      <label>Headcount Range (e.g. Assumptions!B13)</label>
+      <input type="text" id="cfgHCRange" placeholder="Assumptions!B13" />
+    </div>
+  </div>
+  <div class="config-actions">
+    <button class="save-config-btn" onclick="saveConfig()">Save Config</button>
+    <span class="config-note">API Key is saved locally in your browser only · Sheets must be shared publicly or with API key access</span>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="container">
+
+  <!-- Month Selector -->
+  <div class="controls-row">
+    <label>Viewing Month:</label>
+    <select class="month-select" id="monthSelect" onchange="recalculate()">
+      <option value="0">Jan 2026</option>
+      <option value="1">Feb 2026</option>
+      <option value="2" selected>Mar 2026</option>
+      <option value="3">Apr 2026</option>
+      <option value="4">May 2026</option>
+      <option value="5">Jun 2026</option>
+      <option value="6">Jul 2026</option>
+      <option value="7">Aug 2026</option>
+      <option value="8">Sep 2026</option>
+      <option value="9">Oct 2026</option>
+      <option value="10">Nov 2026</option>
+      <option value="11">Dec 2026</option>
+    </select>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-row" id="kpiRow">
+
+    <div class="kpi-card green" id="kpiUtil">
+      <div class="kpi-label">Utilization</div>
+      <div class="kpi-value" id="kvUtil">—</div>
+      <div class="kpi-sub" id="ksUtil">of team capacity used</div>
+      <span class="kpi-badge" id="kbUtil">—</span>
+    </div>
+    <div class="kpi-card" id="kpiAvail">
+      <div class="kpi-label">Available Hours</div>
+      <div class="kpi-value" id="kvAvail">—</div>
+      <div class="kpi-sub" id="ksAvail">net hours after breaks & meetings</div>
+    </div>
+    <div class="kpi-card" id="kpiReq">
+      <div class="kpi-label">Required Hours</div>
+      <div class="kpi-value" id="kvReq">—</div>
+      <div class="kpi-sub" id="ksReq">across all task categories</div>
+    </div>
+    <div class="kpi-card" id="kpiSurp">
+      <div class="kpi-label">Surplus / (Deficit)</div>
+      <div class="kpi-value" id="kvSurp">—</div>
+      <div class="kpi-sub">HC required: <span id="ksHC">—</span></div>
+      <span class="kpi-badge" id="kbSurp">—</span>
+    </div>
+  </div>
+
+  <!-- Driver Flag Bar -->
+  <div class="driver-bar" id="driverBar">
+    <div class="driver-chip top-driver">
+      <div class="driver-chip-icon">⏱</div>
+      <div>
+        <div class="driver-chip-label">Top Task Driver</div>
+        <div class="driver-chip-value" id="driverTask">—</div>
+        <div class="driver-chip-pct" id="driverTaskPct">—</div>
+      </div>
+    </div>
+    <div class="driver-chip top-segment">
+      <div class="driver-chip-icon">🏷</div>
+      <div>
+        <div class="driver-chip-label">Top Segment by Hours</div>
+        <div class="driver-chip-value" id="driverSeg">—</div>
+        <div class="driver-chip-pct" id="driverSegPct">—</div>
+      </div>
+    </div>
+    <div class="driver-chip top-segment">
+      <div class="driver-chip-icon">💰</div>
+      <div>
+        <div class="driver-chip-label">Top Segment by Revenue</div>
+        <div class="driver-chip-value" id="driverSegRev">Silver</div>
+        <div class="driver-chip-pct" id="driverSegRevPct">$1.15M avg monthly spend</div>
+      </div>
+    </div>
+    <div class="driver-chip peak-month">
+      <div class="driver-chip-icon">📅</div>
+      <div>
+        <div class="driver-chip-label">Peak Utilization Month</div>
+        <div class="driver-chip-value" id="driverPeakMonth">—</div>
+        <div class="driver-chip-pct" id="driverPeakPct">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview', this)">📊 Overview</button>
+    <button class="tab" onclick="showTab('segments', this)">🏷 Segments</button>
+    <button class="tab" onclick="showTab('tasks', this)">⏱ Task Breakdown</button>
+    <button class="tab" onclick="showTab('forecast', this)">📈 Forecast</button>
+    <button class="tab" onclick="showTab('growth', this)">🚀 Growth Model</button>
+    <button class="tab" onclick="showTab('assumptions', this)">⚙ Assumptions</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: OVERVIEW
+  ══════════════════════════════════════ -->
+  <div class="panel active" id="panel-overview">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Available vs. Required Hours — All Months</div>
+        <div class="chart-wrap"><canvas id="chartCapacity"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly Utilization % <span style="font-weight:400;color:var(--muted);font-size:11px">90% threshold shown</span></div>
+        <div class="chart-wrap"><canvas id="chartUtil"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Monthly Capacity Summary</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">Seasonal Mult</th>
+              <th class="num">Adj Orders</th>
+              <th class="num">Available Hrs</th>
+              <th class="num">Required Hrs</th>
+              <th class="num">Surplus / (Deficit)</th>
+              <th class="num">Utilization</th>
+              <th class="num">HC Required</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="overviewTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: SEGMENTS
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-segments">
+
+    <div class="section-header">Segment Overview — Selected Month</div>
+    <div class="card">
+      <div class="card-title">Providers, Orders & Hours by Segment — <span id="segMonthLabel">Mar 2026</span></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Segment</th>
+              <th class="num">Providers</th>
+              <th class="num">Base Ord/Provider</th>
+              <th class="num">Base Monthly Orders</th>
+              <th class="num">Seasonal Mult</th>
+              <th class="num">Adj Monthly Orders</th>
+              <th class="num">Order Hrs (@ 10 min)</th>
+              <th class="num">% of Order Hours</th>
+              <th class="num">Est. HC Required</th>
+            </tr>
+          </thead>
+          <tbody id="segmentTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Hours by Segment — Selected Month</div>
+        <div class="chart-wrap"><canvas id="chartSegHours"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Utilization Share by Segment</div>
+        <div class="chart-wrap"><canvas id="chartSegUtil"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-header">Segment Hours — Full Year View</div>
+    <div class="card">
+      <div class="card-title">Monthly Order Hours by Segment (Stacked)</div>
+      <div class="chart-wrap-lg"><canvas id="chartSegStack"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Segment Headcount Required — Monthly</div>
+      <div class="chart-wrap"><canvas id="chartSegHC"></canvas></div>
+    </div>
+
+    <div class="section-header">Segment Revenue & Value (2025–2026 Actuals)</div>
+    <div class="card">
+      <div class="card-title">Spend Breakdown by Segment — Revenue per Order · Revenue per Line · Ops Cost per $</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Segment</th>
+              <th class="num">Providers</th>
+              <th class="num">Avg Order Value</th>
+              <th class="num">Highest Order</th>
+              <th class="num">Avg Monthly Spend (Total)</th>
+              <th class="num">Avg Monthly Spend / Provider</th>
+              <th class="num">Avg Pharma Lines / Order</th>
+              <th class="num">$ per Pharma Line</th>
+              <th class="num">Ops Hrs / $1K Revenue</th>
+              <th style="min-width:120px">Monthly Spend Share</th>
+            </tr>
+          </thead>
+          <tbody id="spendTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Monthly Revenue by Segment</div>
+        <div class="chart-wrap"><canvas id="chartSpendBar"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Revenue per Provider vs. Ops Hours per Provider</div>
+        <div class="chart-wrap"><canvas id="chartSpendEfficiency"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section-header">Pharma Lines per Order Distribution (2025–2026 Actuals) — each line = 10 min processing</div>
+    <div class="card">
+      <div class="card-title">Pharma Companies per Order by Segment — Distribution & Weighted Avg Lines</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Segment</th>
+              <th class="num">Total Orders</th>
+              <th class="num">1 Pharma Co</th>
+              <th class="num">2 Pharma Co</th>
+              <th class="num">3 Pharma Co</th>
+              <th class="num">4+ Pharma Co</th>
+              <th class="num">Wtd Avg Lines/Order</th>
+              <th class="num">Avg Min / Order</th>
+              <th class="num">$ per Pharma Line</th>
+              <th style="min-width:200px">Distribution</th>
+            </tr>
+          </thead>
+          <tbody id="pharmaTableBody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px">
+        <div class="pharma-legend">
+          <div class="pharma-legend-item"><div class="pharma-legend-dot" style="background:#264653"></div>1 Pharma Co</div>
+          <div class="pharma-legend-item"><div class="pharma-legend-dot" style="background:#2a9d8f"></div>2 Pharma Co</div>
+          <div class="pharma-legend-item"><div class="pharma-legend-dot" style="background:#e9c46a"></div>3 Pharma Co</div>
+          <div class="pharma-legend-item"><div class="pharma-legend-dot" style="background:#e76f51"></div>4+ Pharma Co</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pharma Lines Distribution — Stacked % by Segment</div>
+      <div class="chart-wrap"><canvas id="chartPharmaStack"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: TASK BREAKDOWN
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-tasks">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Hours by Task Category — <span id="taskMonthLabel">Mar 2026</span></div>
+        <div class="chart-wrap-lg"><canvas id="chartTaskDonut"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Task Hours Detail</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th class="num">Volume / Basis</th>
+                <th class="num">Time (min)</th>
+                <th class="num">Monthly Hrs</th>
+                <th class="num">% of Total</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody id="taskTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Variable vs. Fixed Task Hours — Monthly</div>
+      <div class="chart-wrap"><canvas id="chartTaskBar"></canvas></div>
+    </div>
+
+    <div class="section-header">Section F · Additional Operational Tasks — Reference Table</div>
+    <div class="card">
+      <div class="card-title">Fixed Overhead Tasks — Volume · Time Basis · Monthly Hours</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th class="num">Volume</th>
+              <th class="num">Time (min)</th>
+              <th>Basis</th>
+              <th class="num">Monthly Hours</th>
+              <th>Notes / Source</th>
+            </tr>
+          </thead>
+          <tbody id="sectionFTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: FORECAST
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-forecast">
+    <div class="forecast-insight" id="forecastInsight">Loading forecast analysis…</div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Forecast Orders vs. Capacity Headroom</div>
+        <div class="chart-wrap-lg"><canvas id="chartForecast"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Forecast Summary Table</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Forecast Orders</th>
+                <th class="num">Adj (Seasonal)</th>
+                <th class="num">Est. Req Hrs</th>
+                <th class="num">Surplus</th>
+                <th class="num">Util %</th>
+                <th>Flag</th>
+              </tr>
+            </thead>
+            <tbody id="forecastTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Capacity Headroom Over Forecast Period</div>
+      <div class="chart-wrap"><canvas id="chartForecastSurplus"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: GROWTH MODEL
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-growth">
+
+    <!-- GSheet sync bar -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:12px;font-weight:700;color:var(--primary)">Growth Planning Doc — GSheet Sync</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Pull new account projections by segment from your planning Google Sheet. Expected format: rows = months Jan–Dec, columns = Enterprise / Gold / Silver / Momentum / Growth</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <input class="growth-range-input" id="growthSheetRange" placeholder="GrowthPlan!B2:F13" title="Range in your planning GSheet: rows=months, cols=segments">
+        <button class="gsheet-growth-btn" onclick="syncGrowthFromSheet()">
+          <span id="growthSyncSpinner" class="spinner hidden"></span>
+          <span id="growthSyncLabel">↻ Sync Growth Plan</span>
+        </button>
+        <span style="font-size:11px;color:var(--muted)" id="growthSyncStatus">Uses same API key from ⚙ GSheet Config</span>
+      </div>
+    </div>
+
+    <!-- Impact summary KPIs -->
+    <div class="impact-row" id="growthImpactRow">
+      <div class="impact-card">
+        <div class="impact-card-label">New Accounts (Full Year)</div>
+        <div class="impact-card-value" id="gkNewAccts">—</div>
+        <div class="impact-card-sub" id="gkNewAcctsSub">across all segments</div>
+      </div>
+      <div class="impact-card">
+        <div class="impact-card-label">Peak Onboarding Month</div>
+        <div class="impact-card-value" id="gkPeakOnboard">—</div>
+        <div class="impact-card-sub" id="gkPeakOnboardSub">one-time setup hours</div>
+      </div>
+      <div class="impact-card" style="border-left:4px solid var(--accent2)">
+        <div class="impact-card-label">Recurring Volume Added (Dec)</div>
+        <div class="impact-card-value" id="gkRecurring">—</div>
+        <div class="impact-card-sub" id="gkRecurringSub">additional hrs/month by year-end</div>
+      </div>
+      <div class="impact-card" id="gkCapCard">
+        <div class="impact-card-label">Capacity Risk</div>
+        <div class="impact-card-value" id="gkCapRisk">—</div>
+        <div class="impact-card-sub" id="gkCapRiskSub">months near/over limit</div>
+      </div>
+    </div>
+
+    <!-- Per-segment growth assumptions -->
+    <div class="section-header">Per-Segment Growth Assumptions</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px" id="growthSegAssume">
+      <!-- rendered by JS -->
+    </div>
+
+    <!-- Monthly new accounts planning table -->
+    <div class="section-header">Monthly New Account Plan — Edit or Sync from GSheet</div>
+    <div class="card">
+      <div class="card-title" style="justify-content:space-between">
+        New Accounts Launching per Month by Segment
+        <button class="reset-btn" style="margin:0;padding:5px 12px;font-size:11px" onclick="clearGrowthPlan()">Clear Plan</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="growth-plan-table" id="growthPlanTable">
+          <thead>
+            <tr>
+              <th style="text-align:left">Month</th>
+              <th style="color:#e76f51">Enterprise</th>
+              <th style="color:#f4a261">Gold</th>
+              <th style="color:#0077b6">Silver</th>
+              <th style="color:#48cae4">Momentum</th>
+              <th style="color:#0096c7">Growth</th>
+              <th>Total New</th>
+            </tr>
+          </thead>
+          <tbody id="growthPlanBody"><!-- rendered by JS --></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">New Accounts per Month by Segment</div>
+        <div class="chart-wrap"><canvas id="chartGrowthNew"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cumulative Active Accounts by Segment</div>
+        <div class="chart-wrap"><canvas id="chartGrowthCumul"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Monthly Capacity Impact: Base vs. Onboarding vs. Recurring New Volume</div>
+      <div class="chart-wrap-lg"><canvas id="chartGrowthCapacity"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Utilization With vs. Without Growth — Full Year</div>
+      <div class="chart-wrap"><canvas id="chartGrowthUtil"></canvas></div>
+    </div>
+
+    <!-- Monthly breakdown table -->
+    <div class="section-header">Month-by-Month Growth Impact Detail</div>
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">New Accts</th>
+              <th class="num">Onboard Hrs</th>
+              <th class="num">Recurring New Hrs</th>
+              <th class="num">Total Growth Hrs</th>
+              <th class="num">Base Req Hrs</th>
+              <th class="num">Total Req Hrs</th>
+              <th class="num">Available</th>
+              <th class="num">Surplus</th>
+              <th class="num">Util (w/ Growth)</th>
+              <th class="num">Util (base only)</th>
+              <th>Flag</th>
+            </tr>
+          </thead>
+          <tbody id="growthDetailBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       PANEL: ASSUMPTIONS
+  ══════════════════════════════════════ -->
+  <div class="panel" id="panel-assumptions">
+    <div style="margin-bottom:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <button class="recalc-btn" onclick="recalculate()">⟳ Recalculate All</button>
+      <button class="reset-btn" onclick="resetAssumptions()">↺ Reset to Defaults</button>
+      <span style="font-size:12px;color:var(--muted)">Yellow fields are editable inputs · All calculations update in real time</span>
+    </div>
+    <div class="assumptions-grid">
+
+      <!-- Section A: Work Hours -->
+      <div class="assume-section">
+        <h3>A · Work Hours</h3>
+        <div class="assume-row"><div><div class="assume-label">Work Hours per OA per Day</div></div><input class="assume-input" id="a_hoursPerDay" type="number" value="8" step="0.5" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Working Days per Month</div></div><input class="assume-input" id="a_daysPerMonth" type="number" value="21.5" step="0.5" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Weeks per Month</div></div><input class="assume-input" id="a_weeksPerMonth" type="number" value="4.3" step="0.1" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Lunch Break (mins/day)</div></div><input class="assume-input" id="a_lunch" type="number" value="30" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Break 1 (mins/day)</div></div><input class="assume-input" id="a_break1" type="number" value="15" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Break 2 (mins/day)</div></div><input class="assume-input" id="a_break2" type="number" value="15" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Team Meeting Hrs/Week</div></div><input class="assume-input" id="a_meetingHrsWk" type="number" value="1" step="0.5" onchange="recalculate()"></div>
+      </div>
+
+      <!-- Section B: Order Volume -->
+      <div class="assume-section">
+        <h3>B · Order Volume</h3>
+        <div class="assume-row"><div><div class="assume-label">Avg Monday Orders/Day</div></div><input class="assume-input" id="b_monOrders" type="number" value="110" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Avg Tue–Thu Orders/Day</div></div><input class="assume-input" id="b_tueThuOrders" type="number" value="60" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Avg Friday Orders/Day</div></div><input class="assume-input" id="b_friOrders" type="number" value="40" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Avg Pharma Lines/Order</div></div><input class="assume-input" id="b_pharmaLines" type="number" value="1.02" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Time per Pharma Line (min)</div></div><input class="assume-input" id="b_pharmaLineMins" type="number" value="10" onchange="recalculate()"></div>
+      </div>
+
+      <!-- Section C: Account Setup -->
+      <div class="assume-section">
+        <h3>C · Account Setup</h3>
+        <div class="assume-row"><div><div class="assume-label">Monthly Net New Medspas</div></div><input class="assume-input" id="c_netNew" type="number" value="100" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Monthly COA/MD/Delink</div></div><input class="assume-input" id="c_coa" type="number" value="44" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Monthly Migrations</div></div><input class="assume-input" id="c_migration" type="number" value="25" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Pharma Accounts/Medspa</div></div><input class="assume-input" id="c_pharmaAccts" type="number" value="6.57" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Time per Pharma Setup (min)</div></div><input class="assume-input" id="c_setupMins" type="number" value="15" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Time per COA/MD/Delink (min)</div></div><input class="assume-input" id="c_coaMins" type="number" value="15" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Customer Inquiries/Month</div></div><input class="assume-input" id="c_inquiries" type="number" value="12" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Time per Inquiry (min)</div></div><input class="assume-input" id="c_inquiryMins" type="number" value="15" onchange="recalculate()"></div>
+      </div>
+
+      <!-- Section D: Staffing -->
+      <div class="assume-section">
+        <h3>D · Staffing</h3>
+        <div class="assume-row"><div><div class="assume-label">Total OA Headcount (incl. Lead)</div></div><input class="assume-input" id="d_totalOAs" type="number" value="9" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Lead Capacity % (as FTE)</div></div><input class="assume-input" id="d_leadPct" type="number" value="0.15" step="0.05" onchange="recalculate()"></div>
+      </div>
+
+      <!-- Section F: Operational Tasks -->
+      <div class="assume-section">
+        <h3>F · Operational Tasks</h3>
+        <div class="assume-row"><div><div class="assume-label">Order Tracking Orders/Day</div></div><input class="assume-input" id="f_trackOrders" type="number" value="65" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Order Tracking (min/order)</div></div><input class="assume-input" id="f_trackMins" type="number" value="7" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Email Sweeps/Day</div></div><input class="assume-input" id="f_emailSweeps" type="number" value="2" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Email Sweep (min/sweep)</div></div><input class="assume-input" id="f_emailMins" type="number" value="20" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Shopify Sweeps/Day</div></div><input class="assume-input" id="f_shopifySweeps" type="number" value="1" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Shopify Sweep (min/sweep)</div></div><input class="assume-input" id="f_shopifyMins" type="number" value="20" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Handoff OAs/Day</div></div><input class="assume-input" id="f_handoffOAs" type="number" value="8" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Handoff (min/OA/day)</div></div><input class="assume-input" id="f_handoffMins" type="number" value="10" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Merz Runs/Week</div></div><input class="assume-input" id="f_merzRuns" type="number" value="1" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Merz (min/run)</div></div><input class="assume-input" id="f_merzMins" type="number" value="60" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Portal Checks/Day</div></div><input class="assume-input" id="f_portalChecks" type="number" value="1" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Portal Check (min/check)</div></div><input class="assume-input" id="f_portalMins" type="number" value="15" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Reconciliations/Month</div></div><input class="assume-input" id="f_reconMonth" type="number" value="3" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Recon (min/session)</div></div><input class="assume-input" id="f_reconMins" type="number" value="120" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Price Discrepancies/Week</div></div><input class="assume-input" id="f_priceIssues" type="number" value="3" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Price Disc (min/issue)</div></div><input class="assume-input" id="f_priceMins" type="number" value="3" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">SOP Updates/Month</div></div><input class="assume-input" id="f_sopUpdates" type="number" value="5" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">SOP Update (min/update)</div></div><input class="assume-input" id="f_sopMins" type="number" value="10" onchange="recalculate()"></div>
+      </div>
+
+      <!-- Section E: Seasonal Multipliers -->
+      <div class="assume-section">
+        <h3>E · Seasonal Multipliers</h3>
+        <div class="assume-row"><div class="assume-label">January</div><input class="assume-input" id="s_jan" type="number" value="1.01" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">February</div><input class="assume-input" id="s_feb" type="number" value="1.22" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">March</div><input class="assume-input" id="s_mar" type="number" value="1.17" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">April</div><input class="assume-input" id="s_apr" type="number" value="0.86" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">May</div><input class="assume-input" id="s_may" type="number" value="0.86" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">June</div><input class="assume-input" id="s_jun" type="number" value="0.89" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">July</div><input class="assume-input" id="s_jul" type="number" value="1.02" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">August</div><input class="assume-input" id="s_aug" type="number" value="1.04" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">September</div><input class="assume-input" id="s_sep" type="number" value="1.04" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">October</div><input class="assume-input" id="s_oct" type="number" value="1.01" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">November</div><input class="assume-input" id="s_nov" type="number" value="1.06" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label">December</div><input class="assume-input" id="s_dec" type="number" value="1.05" step="0.01" onchange="recalculate()"></div>
+      </div>
+
+      <!-- Section G: Segments -->
+      <div class="assume-section">
+        <h3>G · Business Segments</h3>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Providers · Avg Orders/Provider/Month</div>
+        <div class="assume-row"><div class="assume-label seg-gold">● Gold — Providers</div><input class="assume-input" id="g_goldP" type="number" value="41" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-gold">● Gold — Avg Ord/Provider</div><input class="assume-input" id="g_goldO" type="number" value="4.34" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-enterprise">● Enterprise — Providers</div><input class="assume-input" id="g_entP" type="number" value="21" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-enterprise">● Enterprise — Avg Ord/Provider</div><input class="assume-input" id="g_entO" type="number" value="3.96" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-silver">● Silver — Providers</div><input class="assume-input" id="g_silvP" type="number" value="331" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-silver">● Silver — Avg Ord/Provider</div><input class="assume-input" id="g_silvO" type="number" value="2.77" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-momentum">● Momentum — Providers</div><input class="assume-input" id="g_momP" type="number" value="143" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-momentum">● Momentum — Avg Ord/Provider</div><input class="assume-input" id="g_momO" type="number" value="1.73" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-growth">● Growth — Providers</div><input class="assume-input" id="g_growP" type="number" value="173" onchange="recalculate()"></div>
+        <div class="assume-row"><div class="assume-label seg-growth">● Growth — Avg Ord/Provider</div><input class="assume-input" id="g_growO" type="number" value="1.64" step="0.01" onchange="recalculate()"></div>
+      </div>
+
+    </div><!-- /assumptions-grid -->
+  </div><!-- /panel-assumptions -->
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATA & STATE
+// ═══════════════════════════════════════════════════
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_LABELS = MONTHS.map(m => m + ' 2026');
+
+const SEG_COLORS = {
+  Gold: '#f4a261', Enterprise: '#e76f51', Silver: '#90e0ef', Momentum: '#48cae4', Growth: '#0096c7'
+};
+
+// Forecast data from model (raw orders)
+const FORECAST_ORDERS = [1289, 1555, 1058, 1492, 1097, 1097, 1135, 1300, 1326, 1283, 1352, 1339];
+
+// Segment spend data (2025-2026 actuals)
+const SEGMENT_SPEND = {
+  Enterprise: { providers: 20, avgOrderValue: 3408, highestOrderValue: 48750, avgMonthlySpend: 140199, avgMonthlySpendPerProvider: 15868 },
+  Gold:       { providers: 42, avgOrderValue: 2539, highestOrderValue: 38250, avgMonthlySpend: 489099, avgMonthlySpendPerProvider: 13307 },
+  Silver:     { providers: 335, avgOrderValue: 1643, highestOrderValue: 25000, avgMonthlySpend: 1154244, avgMonthlySpendPerProvider: 4801 },
+  Momentum:   { providers: 162, avgOrderValue: 1580, highestOrderValue: 21495, avgMonthlySpend: 103429, avgMonthlySpendPerProvider: 3090 },
+  Growth:     { providers: 197, avgOrderValue: 1257, highestOrderValue: 43515, avgMonthlySpend: 188364, avgMonthlySpendPerProvider: 2126 },
+};
+
+// Pharma companies per order distribution (2025-2026 actuals)
+// Each order = 1 pharma company = 1 line; each line = 10 min processing
+const PHARMA_LINES_DIST = {
+  Enterprise: { total: 114,  '1': {n:5,   pct:4.4},  '2': {n:87,   pct:76.3}, '3': {n:17,  pct:14.9}, '4+': {n:5,  pct:4.4}  },
+  Gold:       { total: 479,  '1': {n:36,  pct:7.5},  '2': {n:348,  pct:72.7}, '3': {n:80,  pct:16.7}, '4+': {n:15, pct:3.1}  },
+  Silver:     { total: 1641, '1': {n:143, pct:8.7},  '2': {n:1237, pct:75.4}, '3': {n:234, pct:14.3}, '4+': {n:27, pct:1.7}  },
+  Momentum:   { total: 171,  '1': {n:29,  pct:17.0}, '2': {n:102,  pct:59.7}, '3': {n:30,  pct:17.5}, '4+': {n:10, pct:5.9}  },
+  Growth:     { total: 341,  '1': {n:38,  pct:11.1}, '2': {n:259,  pct:76.0}, '3': {n:37,  pct:10.9}, '4+': {n:7,  pct:2.1}  },
+};
+// Weighted avg pharma lines/order per segment (1×p1 + 2×p2 + 3×p3 + 4×p4+) / total
+const PHARMA_AVG_LINES = {
+  Enterprise: (1*5 + 2*87 + 3*17 + 4*5)   / 114,   // 2.19
+  Gold:       (1*36 + 2*348 + 3*80 + 4*15) / 479,   // 2.15
+  Silver:     (1*143 + 2*1237 + 3*234 + 4*27) / 1641, // 2.09
+  Momentum:   (1*29 + 2*102 + 3*30 + 4*10) / 171,   // 2.12
+  Growth:     (1*38 + 2*259 + 3*37 + 4*7)  / 341,   // 2.04
+};
+
+// Chart instances registry
+const charts = {};
+
+// ═══════════════════════════════════════════════════
+//  CORE CALCULATIONS
+// ═══════════════════════════════════════════════════
+function getAssumptions() {
+  const n = id => parseFloat(document.getElementById(id).value) || 0;
+  return {
+    hoursPerDay: n('a_hoursPerDay'),
+    daysPerMonth: n('a_daysPerMonth'),
+    weeksPerMonth: n('a_weeksPerMonth'),
+    lunch: n('a_lunch'),
+    break1: n('a_break1'),
+    break2: n('a_break2'),
+    meetingHrsWk: n('a_meetingHrsWk'),
+    // B
+    monOrders: n('b_monOrders'),
+    tueThuOrders: n('b_tueThuOrders'),
+    friOrders: n('b_friOrders'),
+    pharmaLines: n('b_pharmaLines'),
+    pharmaLineMins: n('b_pharmaLineMins'),
+    // C
+    netNew: n('c_netNew'),
+    coa: n('c_coa'),
+    migration: n('c_migration'),
+    pharmaAccts: n('c_pharmaAccts'),
+    setupMins: n('c_setupMins'),
+    coaMins: n('c_coaMins'),
+    inquiries: n('c_inquiries'),
+    inquiryMins: n('c_inquiryMins'),
+    // D
+    totalOAs: n('d_totalOAs'),
+    leadPct: n('d_leadPct'),
+    // F
+    trackOrders: n('f_trackOrders'),
+    trackMins: n('f_trackMins'),
+    emailSweeps: n('f_emailSweeps'),
+    emailMins: n('f_emailMins'),
+    shopifySweeps: n('f_shopifySweeps'),
+    shopifyMins: n('f_shopifyMins'),
+    handoffOAs: n('f_handoffOAs'),
+    handoffMins: n('f_handoffMins'),
+    merzRuns: n('f_merzRuns'),
+    merzMins: n('f_merzMins'),
+    portalChecks: n('f_portalChecks'),
+    portalMins: n('f_portalMins'),
+    reconMonth: n('f_reconMonth'),
+    reconMins: n('f_reconMins'),
+    priceIssues: n('f_priceIssues'),
+    priceMins: n('f_priceMins'),
+    sopUpdates: n('f_sopUpdates'),
+    sopMins: n('f_sopMins'),
+    // Seasonal
+    seasonal: [
+      n('s_jan'), n('s_feb'), n('s_mar'), n('s_apr'), n('s_may'), n('s_jun'),
+      n('s_jul'), n('s_aug'), n('s_sep'), n('s_oct'), n('s_nov'), n('s_dec')
+    ],
+    // Segments
+    segments: [
+      { name: 'Gold',       providers: n('g_goldP'), avgOrders: n('g_goldO'), color: SEG_COLORS.Gold },
+      { name: 'Enterprise', providers: n('g_entP'),  avgOrders: n('g_entO'),  color: SEG_COLORS.Enterprise },
+      { name: 'Silver',     providers: n('g_silvP'), avgOrders: n('g_silvO'), color: SEG_COLORS.Silver },
+      { name: 'Momentum',   providers: n('g_momP'),  avgOrders: n('g_momO'),  color: SEG_COLORS.Momentum },
+      { name: 'Growth',     providers: n('g_growP'), avgOrders: n('g_growO'), color: SEG_COLORS.Growth },
+    ]
+  };
+}
+
+function calcModel(a) {
+  // Net hours per OA per month
+  const totalBreakMins = a.lunch + a.break1 + a.break2;
+  const breakHrsMonth = (totalBreakMins / 60) * a.daysPerMonth;
+  const meetingHrsMonth = a.meetingHrsWk * a.weeksPerMonth;
+  const grossHrsOA = a.hoursPerDay * a.daysPerMonth;
+  const netHrsOA = grossHrsOA - breakHrsMonth - meetingHrsMonth;
+
+  // Effective FTE = (totalOAs - 1) + leadPct, where leadPct is the fraction the Lead contributes
+  // Source model: 9 OAs, Lead = 0.85 FTE → effective = 8*1 + 0.85 = 8.85...
+  // But source shows 8.15: (9-1) * 1.0 + 0.15 = 8.15 (lead contributes only 15% of FTE to ops)
+  const effectiveFTE = (a.totalOAs - 1) * 1.0 + a.leadPct;
+  const totalAvailHrs = effectiveFTE * netHrsOA;
+
+  // Base weekly orders
+  const weeklyOrders = a.monOrders + (a.tueThuOrders * 3) + a.friOrders;
+  const baseMonthlyOrders = weeklyOrders * a.weeksPerMonth;
+  // Base monthly pharma transactions (orders × lines)
+  const baseMonthlyPharmaLines = baseMonthlyOrders * a.pharmaLines;
+
+  // Fixed task hours (don't vary by season)
+  const trackHrs = a.trackOrders * a.trackMins / 60 * a.daysPerMonth;
+  const emailHrs = a.emailSweeps * a.emailMins / 60 * a.daysPerMonth;
+  const shopifyHrs = a.shopifySweeps * a.shopifyMins / 60 * a.daysPerMonth; // informational only — excluded from required hrs per source model
+  const handoffHrs = a.handoffOAs * a.handoffMins / 60 * a.daysPerMonth;
+  const merzHrs = a.merzRuns * a.merzMins / 60 * a.weeksPerMonth;
+  const portalHrs = a.portalChecks * a.portalMins / 60 * a.daysPerMonth;
+  const reconHrs = a.reconMonth * a.reconMins / 60;
+  const priceHrs = a.priceIssues * a.priceMins / 60 * a.weeksPerMonth;
+  const sopHrs = a.sopUpdates * a.sopMins / 60;
+  // Note: Shopify sweep excluded from required-hours total (mirrors source model where row = NaN)
+  const fixedOpsHrs = trackHrs + emailHrs + handoffHrs + merzHrs + portalHrs + reconHrs + priceHrs + sopHrs;
+
+  // Account setup hours (seasonal-adjusted via medspa net new)
+  const netNewPharmaSetups = a.netNew * a.pharmaAccts * 0.375; // est pharma fraction
+  // We use the model's actuals directly: 246 net new pharma setups, 25 migration
+  const netNewPharmaSetupsBase = a.netNew * 2.46; // derived: 246/100 = 2.46 per medspa
+  const migrationSetupsBase = a.migration;
+  const netNewSetupHrsBase = netNewPharmaSetupsBase * a.setupMins / 60;
+  const migrationSetupHrsBase = migrationSetupsBase * a.setupMins / 60;
+  const coaHrsBase = a.coa * a.coaMins / 60;
+  const inquiryHrsBase = a.inquiries * a.inquiryMins / 60;
+  const accountHrsBase = netNewSetupHrsBase + migrationSetupHrsBase + coaHrsBase + inquiryHrsBase;
+
+  // Per-month calculations
+  const months = MONTHS.map((m, i) => {
+    const sm = a.seasonal[i];
+    const adjOrders = baseMonthlyPharmaLines * sm;
+    const orderFulfillHrs = adjOrders * a.pharmaLineMins / 60;
+    const accountHrs = accountHrsBase * sm; // account tasks scale with volume
+    const totalReqHrs = orderFulfillHrs + accountHrs + fixedOpsHrs;
+    const surplus = totalAvailHrs - totalReqHrs;
+    const util = totalAvailHrs > 0 ? totalReqHrs / totalAvailHrs : 0;
+    const hcRequired = netHrsOA > 0 ? totalReqHrs / netHrsOA : 0;
+    return {
+      month: m, label: m + ' 2026', sm,
+      adjOrders: Math.round(adjOrders),
+      availHrs: totalAvailHrs,
+      orderFulfillHrs, accountHrs, fixedOpsHrs,
+      totalReqHrs, surplus, util, hcRequired
+    };
+  });
+
+  // Task category detail for selected month
+  const getTaskDetail = (monthIdx) => {
+    const sm = a.seasonal[monthIdx];
+    const adjOrders = baseMonthlyPharmaLines * sm;
+    return [
+      { name: 'Order Fulfillment',         hrs: adjOrders * a.pharmaLineMins / 60,      type: 'Variable', vol: Math.round(adjOrders) + ' pharma lines', mins: a.pharmaLineMins },
+      { name: 'Net New Account Setup',     hrs: netNewPharmaSetupsBase * sm * a.setupMins/60,  type: 'Variable', vol: Math.round(netNewPharmaSetupsBase*sm) + ' setups', mins: a.setupMins },
+      { name: 'Migration Account Setup',   hrs: migrationSetupsBase * sm * a.setupMins/60,     type: 'Variable', vol: Math.round(migrationSetupsBase*sm) + ' setups', mins: a.setupMins },
+      { name: 'COA / MD / Delink',         hrs: a.coa * sm * a.coaMins/60,             type: 'Variable', vol: Math.round(a.coa*sm) + ' actions', mins: a.coaMins },
+      { name: 'Customer Inquiries',        hrs: a.inquiries * sm * a.inquiryMins/60,    type: 'Variable', vol: Math.round(a.inquiries*sm) + ' inquiries', mins: a.inquiryMins },
+      { name: 'Order Tracking',            hrs: trackHrs,                               type: 'Fixed',    vol: a.trackOrders + '/day × ' + a.daysPerMonth + ' days', mins: a.trackMins },
+      { name: 'Email / Slack Sweep',       hrs: emailHrs,                               type: 'Fixed',    vol: a.emailSweeps + '/day sweep', mins: a.emailMins },
+      { name: 'Shopify / Tracker Sweep',   hrs: shopifyHrs,                             type: 'Fixed',    vol: a.shopifySweeps + '/day sweep', mins: a.shopifyMins },
+      { name: 'Shift Handoffs',            hrs: handoffHrs,                             type: 'Fixed',    vol: a.handoffOAs + ' OAs × daily', mins: a.handoffMins },
+      { name: 'Merz Samples',             hrs: merzHrs,                                type: 'Fixed',    vol: a.merzRuns + '/wk × ' + a.weeksPerMonth + ' wks', mins: a.merzMins },
+      { name: 'Portal Checks',             hrs: portalHrs,                              type: 'Fixed',    vol: a.portalChecks + '/day check', mins: a.portalMins },
+      { name: 'Monthly Reconciliation',    hrs: reconHrs,                               type: 'Fixed',    vol: a.reconMonth + '× per month', mins: a.reconMins },
+      { name: 'Price Discrepancy',         hrs: priceHrs,                               type: 'Fixed',    vol: a.priceIssues + '/wk issues', mins: a.priceMins },
+      { name: 'SOP Updates',               hrs: sopHrs,                                 type: 'Fixed',    vol: a.sopUpdates + '/month', mins: a.sopMins },
+    ];
+  };
+
+  // Segment detail per month
+  const getSegmentDetail = (monthIdx) => {
+    const sm = a.seasonal[monthIdx];
+    const totalOrdHrs = months[monthIdx].orderFulfillHrs;
+    const totalSegBaseOrds = a.segments.reduce((s, seg) => s + seg.providers * seg.avgOrders, 0);
+    return a.segments.map(seg => {
+      const baseOrds = seg.providers * seg.avgOrders;
+      const adjOrds = baseOrds * sm;
+      const ordHrs = adjOrds * a.pharmaLineMins / 60;
+      const pctOfOrdHrs = totalSegBaseOrds > 0 ? baseOrds / totalSegBaseOrds : 0;
+      const hcReq = netHrsOA > 0 ? ordHrs / netHrsOA : 0;
+      const util = totalAvailHrs > 0 ? ordHrs / totalAvailHrs : 0;
+      return { ...seg, baseOrds, adjOrds, ordHrs, pctOfOrdHrs, hcReq, util };
+    });
+  };
+
+  return { months, getTaskDetail, getSegmentDetail, netHrsOA, totalAvailHrs, effectiveFTE };
+}
+
+// ═══════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════
+function fmt(n, dec=0) { return isNaN(n) ? '—' : n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function fmtPct(n) { return (n*100).toFixed(1) + '%'; }
+function utilBadge(u) {
+  if (u >= 1.0) return ['🔴 OVER CAPACITY', 'pill pill-red'];
+  if (u >= 0.9) return ['🟡 NEAR LIMIT', 'pill pill-yellow'];
+  return ['🟢 OK', 'pill pill-green'];
+}
+function utilFlag(u) {
+  if (u >= 1.0) return '<span class="flag flag-over">🔴 Over</span>';
+  if (u >= 0.9) return '<span class="flag flag-warn">🟡 Near Limit</span>';
+  return '<span class="flag flag-ok">🟢 OK</span>';
+}
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+// ═══════════════════════════════════════════════════
+//  KPI UPDATE
+// ═══════════════════════════════════════════════════
+function updateKPIs() {
+  const a = getAssumptions();
+  const model = calcModel(a);
+  const idx = parseInt(document.getElementById('monthSelect').value);
+  const m = model.months[idx];
+  const [badgeText, badgeClass] = utilBadge(m.util);
+
+  document.getElementById('kvUtil').textContent = fmtPct(m.util);
+  document.getElementById('kbUtil').textContent = badgeText;
+  document.getElementById('kbUtil').className = 'kpi-badge ' + (m.util >= 1 ? 'badge-red' : m.util >= 0.9 ? 'badge-yellow' : 'badge-green');
+
+  document.getElementById('kvAvail').textContent = fmt(m.availHrs, 1);
+  document.getElementById('ksAvail').textContent = fmt(a.effectiveFTE || model.effectiveFTE, 2) + ' effective FTEs × ' + fmt(model.netHrsOA, 1) + ' net hrs/OA';
+
+  document.getElementById('kvReq').textContent = fmt(m.totalReqHrs, 1);
+  document.getElementById('ksReq').textContent = 'Order: ' + fmt(m.orderFulfillHrs, 1) + ' · Acct: ' + fmt(m.accountHrs, 1) + ' · Ops: ' + fmt(m.fixedOpsHrs, 1);
+
+  document.getElementById('kvSurp').textContent = (m.surplus >= 0 ? '+' : '') + fmt(m.surplus, 1);
+  document.getElementById('ksHC').textContent = fmt(m.hcRequired, 2) + ' FTEs';
+  document.getElementById('kbSurp').textContent = badgeText;
+  document.getElementById('kbSurp').className = 'kpi-badge ' + (m.surplus < 0 ? 'badge-red' : m.surplus < 100 ? 'badge-yellow' : 'badge-green');
+
+  // ── Driver flag bar ──
+  // Top task: find highest hour task for this month
+  const tasks = model.getTaskDetail(idx);
+  const topTask = tasks.reduce((best, t) => t.hrs > best.hrs ? t : best, tasks[0]);
+  const totalTaskHrs = tasks.reduce((s, t) => s + t.hrs, 0);
+  document.getElementById('driverTask').textContent = topTask.name;
+  document.getElementById('driverTaskPct').textContent = fmt(topTask.hrs, 1) + ' hrs · ' + fmtPct(topTask.hrs / totalTaskHrs) + ' of required';
+
+  // Top segment by order hours
+  const segDetail = model.getSegmentDetail(idx);
+  const topSeg = segDetail.reduce((best, s) => s.ordHrs > best.ordHrs ? s : best, segDetail[0]);
+  const totalSegHrs = segDetail.reduce((s, sg) => s + sg.ordHrs, 0);
+  document.getElementById('driverSeg').textContent = topSeg.name;
+  document.getElementById('driverSegPct').textContent = fmt(topSeg.ordHrs, 1) + ' order hrs · ' + fmtPct(topSeg.ordHrs / totalSegHrs) + ' of order hours';
+
+  // Peak utilization month
+  const peakMonth = model.months.reduce((best, mo) => mo.util > best.util ? mo : best, model.months[0]);
+  document.getElementById('driverPeakMonth').textContent = peakMonth.label;
+  document.getElementById('driverPeakPct').textContent = fmtPct(peakMonth.util) + ' utilization · ' + fmt(peakMonth.surplus, 0) + ' hrs surplus';
+}
+
+// ═══════════════════════════════════════════════════
+//  OVERVIEW CHARTS
+// ═══════════════════════════════════════════════════
+function renderOverview(a, model) {
+  const ms = model.months;
+  const avail = ms.map(m => m.availHrs);
+  const req = ms.map(m => m.totalReqHrs);
+  const utils = ms.map(m => m.util * 100);
+
+  // Capacity bar chart
+  destroyChart('chartCapacity');
+  charts['chartCapacity'] = new Chart(document.getElementById('chartCapacity'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        { label: 'Available Hours', data: avail, backgroundColor: '#e8f4fd', borderColor: '#0096c7', borderWidth: 1.5 },
+        { label: 'Required Hours',  data: req,   backgroundColor: ms.map(m => m.util >= 1 ? '#fdecea' : m.util >= 0.9 ? '#fff8e6' : '#e8f8f0'), borderColor: ms.map(m => m.util >= 1 ? '#e74c3c' : m.util >= 0.9 ? '#f39c12' : '#2ecc71'), borderWidth: 1.5 }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } },
+      scales: { y: { title: { display: true, text: 'Hours' }, grid: { color: '#f0f0f0' } } } }
+  });
+
+  // Utilization line
+  destroyChart('chartUtil');
+  charts['chartUtil'] = new Chart(document.getElementById('chartUtil'), {
+    type: 'line',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        { label: 'Utilization %', data: utils, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointBackgroundColor: utils.map(u => u >= 100 ? '#e74c3c' : u >= 90 ? '#f39c12' : '#2ecc71'), pointRadius: 5 },
+        { label: '90% Threshold', data: Array(12).fill(90), borderColor: '#f39c12', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: '100% Limit', data: Array(12).fill(100), borderColor: '#e74c3c', borderDash: [4,3], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { title: { display: true, text: '%' }, min: 40, max: 110, grid: { color: '#f0f0f0' } } } }
+  });
+
+  // Overview table
+  const tbody = document.getElementById('overviewTableBody');
+  tbody.innerHTML = ms.map((m, i) => `
+    <tr>
+      <td><strong>${m.label}</strong></td>
+      <td class="num">${m.sm.toFixed(2)}</td>
+      <td class="num">${fmt(m.adjOrders)}</td>
+      <td class="num">${fmt(m.availHrs, 1)}</td>
+      <td class="num">${fmt(m.totalReqHrs, 1)}</td>
+      <td class="num" style="color:${m.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${m.surplus >= 0 ? '+' : ''}${fmt(m.surplus, 1)}</td>
+      <td class="num">${fmtPct(m.util)}</td>
+      <td class="num">${fmt(m.hcRequired, 2)}</td>
+      <td>${utilFlag(m.util)}</td>
+    </tr>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════
+//  SEGMENT CHARTS
+// ═══════════════════════════════════════════════════
+function renderSegments(a, model) {
+  const idx = parseInt(document.getElementById('monthSelect').value);
+  const segDetail = model.getSegmentDetail(idx);
+  const monthLabel = MONTH_LABELS[idx];
+  document.getElementById('segMonthLabel').textContent = monthLabel;
+
+  // Segment table
+  const tbody = document.getElementById('segmentTableBody');
+  const totalOrdHrs = segDetail.reduce((s, sg) => s + sg.ordHrs, 0);
+  tbody.innerHTML = segDetail.map(sg => `
+    <tr>
+      <td><span class="seg-dot" style="background:${sg.color}"></span><strong>${sg.name}</strong></td>
+      <td class="num">${fmt(sg.providers)}</td>
+      <td class="num">${sg.avgOrders.toFixed(2)}</td>
+      <td class="num">${fmt(sg.baseOrds, 1)}</td>
+      <td class="num">${a.seasonal[idx].toFixed(2)}</td>
+      <td class="num">${fmt(sg.adjOrds, 1)}</td>
+      <td class="num">${fmt(sg.ordHrs, 1)}</td>
+      <td class="num">${fmtPct(sg.pctOfOrdHrs)}</td>
+      <td class="num">${fmt(sg.hcReq, 2)}</td>
+    </tr>
+  `).join('') + `<tr style="font-weight:700; background:#f5f7fa">
+    <td>TOTAL</td>
+    <td class="num">${fmt(segDetail.reduce((s,sg)=>s+sg.providers,0))}</td>
+    <td class="num">—</td>
+    <td class="num">${fmt(segDetail.reduce((s,sg)=>s+sg.baseOrds,0),1)}</td>
+    <td class="num">—</td>
+    <td class="num">${fmt(segDetail.reduce((s,sg)=>s+sg.adjOrds,0),1)}</td>
+    <td class="num">${fmt(totalOrdHrs,1)}</td>
+    <td class="num">100%</td>
+    <td class="num">${fmt(segDetail.reduce((s,sg)=>s+sg.hcReq,0),2)}</td>
+  </tr>`;
+
+  // Segment hours bar
+  destroyChart('chartSegHours');
+  charts['chartSegHours'] = new Chart(document.getElementById('chartSegHours'), {
+    type: 'bar',
+    data: {
+      labels: segDetail.map(s => s.name),
+      datasets: [{ label: 'Order Hrs', data: segDetail.map(s => s.ordHrs.toFixed(1)), backgroundColor: segDetail.map(s => s.color), borderRadius: 5 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+      scales: { y: { title: { display: true, text: 'Hours' }, grid: { color: '#f0f0f0' } } } }
+  });
+
+  // Segment utilization share donut
+  destroyChart('chartSegUtil');
+  charts['chartSegUtil'] = new Chart(document.getElementById('chartSegUtil'), {
+    type: 'doughnut',
+    data: {
+      labels: segDetail.map(s => s.name),
+      datasets: [{ data: segDetail.map(s => s.ordHrs.toFixed(1)), backgroundColor: segDetail.map(s => s.color), hoverOffset: 6 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+  });
+
+  // Stacked bar: full year by segment
+  destroyChart('chartSegStack');
+  charts['chartSegStack'] = new Chart(document.getElementById('chartSegStack'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: a.segments.map(seg => ({
+        label: seg.name,
+        data: model.months.map((m, i) => {
+          const sm = a.seasonal[i];
+          return (seg.providers * seg.avgOrders * sm * a.pharmaLineMins / 60).toFixed(1);
+        }),
+        backgroundColor: seg.color,
+        stack: 'seg'
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Order Fulfillment Hours' }, grid: { color: '#f0f0f0' } } }
+    }
+  });
+
+  // HC required by segment
+  destroyChart('chartSegHC');
+  charts['chartSegHC'] = new Chart(document.getElementById('chartSegHC'), {
+    type: 'line',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: a.segments.map(seg => ({
+        label: seg.name,
+        data: model.months.map((m, i) => {
+          const sm = a.seasonal[i];
+          const ordHrs = seg.providers * seg.avgOrders * sm * a.pharmaLineMins / 60;
+          return (model.netHrsOA > 0 ? ordHrs / model.netHrsOA : 0).toFixed(2);
+        }),
+        borderColor: seg.color,
+        backgroundColor: seg.color + '20',
+        tension: 0.3, fill: false, pointRadius: 3
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { title: { display: true, text: 'FTE Required' }, grid: { color: '#f0f0f0' } } } }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  TASK CHARTS
+// ═══════════════════════════════════════════════════
+function renderTasks(a, model) {
+  const idx = parseInt(document.getElementById('monthSelect').value);
+  const tasks = model.getTaskDetail(idx);
+  const totalHrs = tasks.reduce((s, t) => s + t.hrs, 0);
+  document.getElementById('taskMonthLabel').textContent = MONTH_LABELS[idx];
+
+  // Donut
+  destroyChart('chartTaskDonut');
+  const taskColors = [
+    '#0096c7','#48cae4','#90e0ef','#ade8f4','#caf0f8',
+    '#f4a261','#e76f51','#e9c46a','#264653','#2a9d8f','#e9c46a','#a8dadc','#457b9d','#1d3557'
+  ];
+  charts['chartTaskDonut'] = new Chart(document.getElementById('chartTaskDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: tasks.map(t => t.name),
+      datasets: [{ data: tasks.map(t => t.hrs.toFixed(1)), backgroundColor: taskColors, hoverOffset: 6 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+  });
+
+  // Task table
+  const tbody = document.getElementById('taskTableBody');
+  tbody.innerHTML = tasks.sort((a,b) => b.hrs - a.hrs).map(t => `
+    <tr>
+      <td>${t.name}</td>
+      <td>${t.vol}</td>
+      <td class="num">${t.mins}</td>
+      <td class="num">${fmt(t.hrs, 1)}</td>
+      <td class="num">${totalHrs > 0 ? fmtPct(t.hrs/totalHrs) : '—'}</td>
+      <td><span class="pill ${t.type === 'Variable' ? 'pill-blue' : 'pill-green'}">${t.type}</span></td>
+    </tr>
+  `).join('') + `<tr style="font-weight:700; background:#f5f7fa"><td>TOTAL</td><td></td><td></td><td class="num">${fmt(totalHrs,1)}</td><td class="num">100%</td><td></td></tr>`;
+
+  // Variable vs fixed bar
+  const varTasks = tasks.filter(t => t.type === 'Variable');
+  const fixTasks = tasks.filter(t => t.type === 'Fixed');
+  const varHrsMonth = model.months.map((m, i) => {
+    const sm = a.seasonal[i];
+    const phLines = (a.monOrders + a.tueThuOrders*3 + a.friOrders) * a.weeksPerMonth * a.pharmaLines;
+    const ordHrs = phLines * sm * a.pharmaLineMins / 60;
+    const netNewS = 100 * 2.46 * sm * a.setupMins / 60;
+    const migS = a.migration * sm * a.setupMins / 60;
+    const coaS = a.coa * sm * a.coaMins / 60;
+    const inqS = a.inquiries * sm * a.inquiryMins / 60;
+    return ordHrs + netNewS + migS + coaS + inqS;
+  });
+  const fixedHrs = model.months.map(m => m.fixedOpsHrs);
+
+  destroyChart('chartTaskBar');
+  charts['chartTaskBar'] = new Chart(document.getElementById('chartTaskBar'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        { label: 'Variable (Volume-Driven)', data: varHrsMonth.map(h => h.toFixed(1)), backgroundColor: '#0096c7', stack: 'tasks' },
+        { label: 'Fixed (Ops Overhead)',     data: fixedHrs.map(h => h.toFixed(1)),    backgroundColor: '#90e0ef', stack: 'tasks' }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'Hours' }, grid: { color: '#f0f0f0' } } }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  FORECAST CHARTS
+// ═══════════════════════════════════════════════════
+function renderForecast(a, model) {
+  const pharmaLinesBase = (a.monOrders + a.tueThuOrders*3 + a.friOrders) * a.weeksPerMonth * a.pharmaLines;
+  const avail = model.months[0].availHrs;
+
+  const fcastData = MONTHS.map((m, i) => {
+    const forecastOrders = FORECAST_ORDERS[i];
+    const adjOrders = forecastOrders * a.pharmaLines;
+    const estOrderHrs = adjOrders * a.pharmaLineMins / 60;
+    const estFixedHrs = model.months[i].fixedOpsHrs;
+    const estAcctHrs = model.months[i].accountHrs;
+    const totalEstHrs = estOrderHrs + estFixedHrs + estAcctHrs;
+    const surplus = avail - totalEstHrs;
+    const util = avail > 0 ? totalEstHrs / avail : 0;
+    return { m, forecastOrders, adjOrders, estReqHrs: totalEstHrs, surplus, util };
+  });
+
+  // Insight
+  const peakMonth = fcastData.reduce((p, c) => c.forecastOrders > p.forecastOrders ? c : p);
+  const troughMonth = fcastData.reduce((p, c) => c.forecastOrders < p.forecastOrders ? c : p);
+  document.getElementById('forecastInsight').innerHTML =
+    `<strong>Forecast Summary:</strong> Peak demand in <strong>${peakMonth.m}</strong> (${fmt(peakMonth.forecastOrders)} orders · ${fmtPct(peakMonth.util)} utilization). ` +
+    `Lightest month is <strong>${troughMonth.m}</strong> (${fmt(troughMonth.forecastOrders)} orders · ${fmtPct(troughMonth.util)} utilization). ` +
+    `All months forecast within available capacity at current headcount.`;
+
+  // Forecast table
+  const tbody = document.getElementById('forecastTableBody');
+  tbody.innerHTML = fcastData.map(f => `
+    <tr>
+      <td><strong>${f.m} 2026</strong></td>
+      <td class="num">${fmt(f.forecastOrders)}</td>
+      <td class="num">${fmt(f.adjOrders, 0)}</td>
+      <td class="num">${fmt(f.estReqHrs, 1)}</td>
+      <td class="num" style="color:${f.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${f.surplus >= 0 ? '+' : ''}${fmt(f.surplus, 1)}</td>
+      <td class="num">${fmtPct(f.util)}</td>
+      <td>${utilFlag(f.util)}</td>
+    </tr>
+  `).join('');
+
+  // Forecast orders + capacity line chart
+  destroyChart('chartForecast');
+  const capacityLimit = Array(12).fill(avail / (a.pharmaLineMins / 60) / a.pharmaLines);
+  charts['chartForecast'] = new Chart(document.getElementById('chartForecast'), {
+    type: 'line',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        { label: 'Forecast Orders', data: FORECAST_ORDERS, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointRadius: 5 },
+        { label: 'Capacity Max (orders eq.)', data: capacityLimit.map(v => Math.round(v)), borderColor: '#e74c3c', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { title: { display: true, text: 'Orders' }, grid: { color: '#f0f0f0' } } } }
+  });
+
+  // Surplus bar
+  destroyChart('chartForecastSurplus');
+  charts['chartForecastSurplus'] = new Chart(document.getElementById('chartForecastSurplus'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [{
+        label: 'Headroom (hrs)',
+        data: fcastData.map(f => f.surplus.toFixed(1)),
+        backgroundColor: fcastData.map(f => f.surplus < 0 ? '#fdecea' : f.surplus < 100 ? '#fff8e6' : '#e8f8f0'),
+        borderColor: fcastData.map(f => f.surplus < 0 ? '#e74c3c' : f.surplus < 100 ? '#f39c12' : '#2ecc71'),
+        borderWidth: 1.5, borderRadius: 4
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { title: { display: true, text: 'Surplus Hours' }, grid: { color: '#f0f0f0' } } } }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  MAIN RECALCULATE
+// ═══════════════════════════════════════════════════
+function recalculate() {
+  const a = getAssumptions();
+  const model = calcModel(a);
+  updateKPIs();
+  const activeTab = document.querySelector('.panel.active').id.replace('panel-', '');
+  renderAll(a, model);
+}
+
+// ═══════════════════════════════════════════════════
+//  SPEND & PHARMA LINES RENDER
+// ═══════════════════════════════════════════════════
+function renderSpend(a) {
+  const fmtDol = n => '$' + Math.round(n).toLocaleString();
+  const segs = ['Enterprise','Gold','Silver','Momentum','Growth'];
+  const totalSpend = segs.reduce((s, sg) => s + SEGMENT_SPEND[sg].avgMonthlySpend, 0);
+
+  // Table
+  const tbody = document.getElementById('spendTableBody');
+  const sortedSegs = [...segs].sort((x,y) => SEGMENT_SPEND[y].avgMonthlySpend - SEGMENT_SPEND[x].avgMonthlySpend);
+  tbody.innerHTML = sortedSegs.map((sg, i) => {
+    const d = SEGMENT_SPEND[sg];
+    const avgLines = PHARMA_AVG_LINES[sg];
+    const dolPerLine = d.avgOrderValue / avgLines;
+    // Ops hours per $1K revenue: (avgOrders×avgLines×10min/60hrs) / (avgOrders×avgOrderValue/1000)
+    // Simplifies to: (avgLines × 10/60) / (avgOrderValue/1000)
+    const opsHrsPer1K = (avgLines * 10 / 60) / (d.avgOrderValue / 1000);
+    const spendPct = d.avgMonthlySpend / totalSpend;
+    const barW = Math.round(spendPct * 100);
+    return `<tr>
+      <td><span class="spend-rank">${i+1}</span></td>
+      <td><span class="seg-dot" style="background:${SEG_COLORS[sg]}"></span><strong>${sg}</strong></td>
+      <td class="num">${d.providers.toLocaleString()}</td>
+      <td class="num"><strong>${fmtDol(d.avgOrderValue)}</strong></td>
+      <td class="num">${fmtDol(d.highestOrderValue)}</td>
+      <td class="num"><strong>${fmtDol(d.avgMonthlySpend)}</strong></td>
+      <td class="num">${fmtDol(d.avgMonthlySpendPerProvider)}</td>
+      <td class="num">${avgLines.toFixed(2)}</td>
+      <td class="num"><strong>${fmtDol(dolPerLine)}</strong></td>
+      <td class="num">${opsHrsPer1K.toFixed(2)} hrs</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="spend-bar-wrap" style="flex:1">
+            <div class="spend-bar-fill" style="width:${barW}%;background:${SEG_COLORS[sg]}"></div>
+          </div>
+          <span style="font-size:11px;width:34px;text-align:right">${(spendPct*100).toFixed(1)}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') + `<tr style="font-weight:700;background:#f5f7fa">
+    <td></td><td>TOTAL</td>
+    <td class="num">${segs.reduce((s,sg)=>s+SEGMENT_SPEND[sg].providers,0).toLocaleString()}</td>
+    <td class="num">—</td><td class="num">—</td>
+    <td class="num">${fmtDol(totalSpend)}</td>
+    <td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">100%</td>
+  </tr>`;
+
+  // Revenue bar chart
+  destroyChart('chartSpendBar');
+  charts['chartSpendBar'] = new Chart(document.getElementById('chartSpendBar'), {
+    type: 'bar',
+    data: {
+      labels: sortedSegs,
+      datasets: [{
+        label: 'Avg Monthly Spend ($)',
+        data: sortedSegs.map(sg => SEGMENT_SPEND[sg].avgMonthlySpend),
+        backgroundColor: sortedSegs.map(sg => SEG_COLORS[sg]),
+        borderRadius: 5
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => '$' + ctx.parsed.y.toLocaleString() } }
+      },
+      scales: { y: { title: { display: true, text: 'Avg Monthly Spend ($)' },
+        ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' }, grid: { color: '#f0f0f0' } } }
+    }
+  });
+
+  // Efficiency scatter: revenue/provider (x) vs ops hrs/provider (y)
+  destroyChart('chartSpendEfficiency');
+  const scatterData = segs.map(sg => {
+    const d = SEGMENT_SPEND[sg];
+    const avgLines = PHARMA_AVG_LINES[sg];
+    // hrs/provider/month: avgOrders × avgLines × 10min/60 (from segment model)
+    // Use known orders per provider from segments assumption
+    const segCfg = {Enterprise:3.96, Gold:4.34, Silver:2.77, Momentum:1.73, Growth:1.64};
+    const ordersPerProvider = segCfg[sg];
+    const hrsPerProvider = ordersPerProvider * avgLines * 10 / 60;
+    return { x: d.avgMonthlySpendPerProvider, y: hrsPerProvider, label: sg, color: SEG_COLORS[sg] };
+  });
+  charts['chartSpendEfficiency'] = new Chart(document.getElementById('chartSpendEfficiency'), {
+    type: 'scatter',
+    data: {
+      datasets: scatterData.map(d => ({
+        label: d.label,
+        data: [{ x: d.x, y: d.y }],
+        backgroundColor: d.color,
+        pointRadius: 10, pointHoverRadius: 13
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'right' },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.parsed.x.toLocaleString()} rev · ${ctx.parsed.y.toFixed(1)} hrs` } }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Avg Monthly Spend per Provider ($)' },
+          ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K' }, grid: { color: '#f0f0f0' } },
+        y: { title: { display: true, text: 'Est. Ops Hrs per Provider' }, grid: { color: '#f0f0f0' } }
+      }
+    }
+  });
+}
+
+function renderPharmaLines() {
+  const segs = ['Enterprise','Gold','Silver','Momentum','Growth'];
+  const lineColors = { '1': '#264653', '2': '#2a9d8f', '3': '#e9c46a', '4+': '#e76f51' };
+
+  // Table
+  const tbody = document.getElementById('pharmaTableBody');
+  tbody.innerHTML = segs.map(sg => {
+    const d = PHARMA_LINES_DIST[sg];
+    const avgLines = PHARMA_AVG_LINES[sg];
+    const avgMins = avgLines * 10;
+    const spend = SEGMENT_SPEND[sg];
+    const dolPerLine = spend.avgOrderValue / avgLines;
+    const distBar = ['1','2','3','4+'].map(k => {
+      const pct = d[k].pct;
+      return `<div class="pharma-dist-seg" style="width:${pct}%;background:${lineColors[k]};min-width:${pct > 3 ? 'auto' : '0'}" title="${k} pharma: ${pct}%">${pct > 8 ? pct.toFixed(0)+'%' : ''}</div>`;
+    }).join('');
+    return `<tr>
+      <td><span class="seg-dot" style="background:${SEG_COLORS[sg]}"></span><strong>${sg}</strong></td>
+      <td class="num">${d.total.toLocaleString()}</td>
+      <td class="num">${d['1'].n.toLocaleString()} <span style="color:var(--muted);font-size:11px">(${d['1'].pct}%)</span></td>
+      <td class="num">${d['2'].n.toLocaleString()} <span style="color:var(--muted);font-size:11px">(${d['2'].pct}%)</span></td>
+      <td class="num">${d['3'].n.toLocaleString()} <span style="color:var(--muted);font-size:11px">(${d['3'].pct}%)</span></td>
+      <td class="num">${d['4+'].n.toLocaleString()} <span style="color:var(--muted);font-size:11px">(${d['4+'].pct}%)</span></td>
+      <td class="num"><strong>${avgLines.toFixed(2)}</strong></td>
+      <td class="num">${avgMins.toFixed(1)} min</td>
+      <td class="num"><strong>$${Math.round(dolPerLine).toLocaleString()}</strong></td>
+      <td><div class="pharma-dist-row">${distBar}</div></td>
+    </tr>`;
+  }).join('');
+
+  // Stacked 100% bar chart
+  destroyChart('chartPharmaStack');
+  charts['chartPharmaStack'] = new Chart(document.getElementById('chartPharmaStack'), {
+    type: 'bar',
+    data: {
+      labels: segs,
+      datasets: ['1','2','3','4+'].map(k => ({
+        label: k + ' Pharma Co',
+        data: segs.map(sg => PHARMA_LINES_DIST[sg][k].pct),
+        backgroundColor: lineColors[k],
+        stack: 'pharma'
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' },
+        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%` } }
+      },
+      scales: {
+        x: { stacked: true },
+        y: { stacked: true, title: { display: true, text: '% of Orders' }, max: 100,
+          ticks: { callback: v => v + '%' }, grid: { color: '#f0f0f0' } }
+      }
+    }
+  });
+}
+
+function renderSectionF(a) {
+  const tbody = document.getElementById('sectionFTableBody');
+  const rows = [
+    { task: 'Order Tracking',              vol: a.trackOrders,   mins: a.trackMins,   basis: 'Daily × Avg Work Days',      hrs: a.trackOrders * a.trackMins / 60 * a.daysPerMonth,   notes: `${a.trackOrders} orders/day × ${a.trackMins} min/order × ${a.daysPerMonth} days` },
+    { task: 'Email / Slack Sweep',         vol: a.emailSweeps,   mins: a.emailMins,   basis: 'Daily × Avg Work Days',      hrs: a.emailSweeps * a.emailMins / 60 * a.daysPerMonth,   notes: `~200 emails/day; ${a.emailMins} min total daily sweep` },
+    { task: 'Shopify / Order Tracker Sweep', vol: a.shopifySweeps, mins: a.shopifyMins, basis: 'Daily × Avg Work Days',   hrs: a.shopifySweeps * a.shopifyMins / 60 * a.daysPerMonth, notes: `${a.shopifySweeps} sweep/day × ${a.shopifyMins} min; aligns portal/Shopify/Tracker` },
+    { task: 'Shift Handoffs & Endorsements', vol: a.handoffOAs, mins: a.handoffMins, basis: 'OAs × Avg Work Days',        hrs: a.handoffOAs * a.handoffMins / 60 * a.daysPerMonth,  notes: `${a.handoffOAs} OAs managed daily × ${a.handoffMins} min endorsement each` },
+    { task: 'Merz Samples Consolidation',  vol: a.merzRuns,      mins: a.merzMins,    basis: 'Runs/Wk × Weeks/Month',     hrs: a.merzRuns * a.merzMins / 60 * a.weeksPerMonth,      notes: `${a.merzRuns} run/week (Fri); ${a.merzMins} min per run; ~30–40 entries` },
+    { task: 'Portal Checks (Outside Moxie)', vol: a.portalChecks, mins: a.portalMins, basis: 'Daily × Avg Work Days',     hrs: a.portalChecks * a.portalMins / 60 * a.daysPerMonth,  notes: `${a.portalChecks} check/day; Allergan + Galderma; ${a.portalMins} min total` },
+    { task: 'Monthly Reconciliation',      vol: a.reconMonth,    mins: a.reconMins,   basis: 'Fixed Monthly',             hrs: a.reconMonth * a.reconMins / 60,                     notes: `${a.reconMonth}× per month × ${a.reconMins} min (${(a.reconMins/60).toFixed(0)} hrs) each` },
+    { task: 'Price Discrepancy Alignment', vol: a.priceIssues,   mins: a.priceMins,   basis: 'Issues/Wk × Wks/Month',     hrs: a.priceIssues * a.priceMins / 60 * a.weeksPerMonth,  notes: `≥${a.priceIssues} issues/week × ${a.priceMins} min each` },
+    { task: 'SOP Updates & Documentation', vol: a.sopUpdates,    mins: a.sopMins,     basis: 'Fixed Monthly',             hrs: a.sopUpdates * a.sopMins / 60,                       notes: `${a.sopUpdates} updates/month × ${a.sopMins} min each` },
+  ];
+  const totalHrs = rows.reduce((s,r) => s + r.hrs, 0);
+  // Mark shopify as excluded from capacity calc
+  tbody.innerHTML = rows.map(r => `
+    <tr ${r.task.includes('Shopify') ? 'style="opacity:0.6"' : ''}>
+      <td>${r.task}${r.task.includes('Shopify') ? ' <span style="font-size:10px;color:var(--muted)">(excl. from capacity total)</span>' : ''}</td>
+      <td class="num">${r.vol}</td>
+      <td class="num">${r.mins}</td>
+      <td>${r.basis}</td>
+      <td class="num"><strong>${r.hrs.toFixed(2)}</strong></td>
+      <td style="font-size:12px;color:var(--muted)">${r.notes}</td>
+    </tr>
+  `).join('') + `<tr style="font-weight:700;background:#f5f7fa">
+    <td>TOTAL ADDITIONAL TASK HOURS</td><td></td><td></td><td></td>
+    <td class="num">${totalHrs.toFixed(2)}</td><td></td>
+  </tr>`;
+}
+
+// ═══════════════════════════════════════════════════
+//  GROWTH MODEL STATE & ENGINE
+// ═══════════════════════════════════════════════════
+
+// Default per-segment growth assumptions
+const GROWTH_DEFAULTS = {
+  Enterprise: { newOrdersPerMonth: 3.96, portalSetupMins: 45, color: SEG_COLORS.Enterprise },
+  Gold:       { newOrdersPerMonth: 4.34, portalSetupMins: 30, color: SEG_COLORS.Gold },
+  Silver:     { newOrdersPerMonth: 2.77, portalSetupMins: 20, color: SEG_COLORS.Silver },
+  Momentum:   { newOrdersPerMonth: 1.73, portalSetupMins: 20, color: SEG_COLORS.Momentum },
+  Growth:     { newOrdersPerMonth: 1.64, portalSetupMins: 15, color: SEG_COLORS.Growth },
+};
+const GROWTH_SEGS = ['Enterprise','Gold','Silver','Momentum','Growth'];
+
+// 12×5 grid: newPlan[monthIdx][segName] = # new accounts
+let growthPlan = MONTHS.map(() => Object.fromEntries(GROWTH_SEGS.map(s => [s, 0])));
+
+function getGrowthAssumptions() {
+  const n = (id) => parseFloat(document.getElementById(id)?.value) || 0;
+  const result = {};
+  GROWTH_SEGS.forEach(seg => {
+    result[seg] = {
+      newOrdersPerMonth: n('ga_orders_' + seg),
+      portalSetupMins:   n('ga_portal_' + seg),
+      color: GROWTH_DEFAULTS[seg].color
+    };
+  });
+  return result;
+}
+
+function calcGrowthModel(baseModel, ga, a) {
+  // For each month, calculate:
+  //  1. new accounts launching (from growthPlan)
+  //  2. cumulative active new accounts (rolling sum)
+  //  3. onboarding hours (one-time per new account in launch month)
+  //  4. recurring hours added (cumulative accounts × new order rate × pharma lines × min/line)
+  //  5. total required = base required + onboarding + recurring new
+
+  const cumulative = Object.fromEntries(GROWTH_SEGS.map(s => [s, 0]));
+
+  return MONTHS.map((m, i) => {
+    const newThisMonth = growthPlan[i];
+    const totalNew = GROWTH_SEGS.reduce((s, seg) => s + (newThisMonth[seg] || 0), 0);
+
+    // Accumulate running total of active new accounts
+    GROWTH_SEGS.forEach(seg => { cumulative[seg] += (newThisMonth[seg] || 0); });
+    const totalCumulative = GROWTH_SEGS.reduce((s, seg) => s + cumulative[seg], 0);
+
+    // Onboarding hours: pharma account setups + portal/system setup per new account
+    const pharmaAcctsPerMedspa = a.pharmaAccts || 6.57;
+    const setupMins = a.setupMins || 15;
+    let onboardHrs = 0;
+    GROWTH_SEGS.forEach(seg => {
+      const n = newThisMonth[seg] || 0;
+      if (n > 0) {
+        const pharmaSetupHrs = n * pharmaAcctsPerMedspa * setupMins / 60;
+        const portalSetupHrs = n * ga[seg].portalSetupMins / 60;
+        onboardHrs += pharmaSetupHrs + portalSetupHrs;
+      }
+    });
+
+    // Recurring new volume hours: cumulative accounts × avg orders/month × pharmaLines × mins/line × seasonal
+    const sm = a.seasonal[i];
+    let recurringHrs = 0;
+    GROWTH_SEGS.forEach(seg => {
+      if (cumulative[seg] > 0) {
+        const ordHrs = cumulative[seg] * ga[seg].newOrdersPerMonth * a.pharmaLines * a.pharmaLineMins / 60 * sm;
+        recurringHrs += ordHrs;
+      }
+    });
+
+    const baseReqHrs = baseModel.months[i].totalReqHrs;
+    const totalGrowthHrs = onboardHrs + recurringHrs;
+    const totalReqHrs = baseReqHrs + totalGrowthHrs;
+    const avail = baseModel.months[i].availHrs;
+    const surplus = avail - totalReqHrs;
+    const util = avail > 0 ? totalReqHrs / avail : 0;
+    const baseUtil = baseModel.months[i].util;
+
+    // Per-segment breakdown for charts
+    const segOnboard = Object.fromEntries(GROWTH_SEGS.map(seg => {
+      const n = newThisMonth[seg] || 0;
+      return [seg, n > 0 ? (n * pharmaAcctsPerMedspa * setupMins / 60 + n * ga[seg].portalSetupMins / 60) : 0];
+    }));
+    const segRecurring = Object.fromEntries(GROWTH_SEGS.map(seg => {
+      return [seg, cumulative[seg] > 0 ? (cumulative[seg] * ga[seg].newOrdersPerMonth * a.pharmaLines * a.pharmaLineMins / 60 * sm) : 0];
+    }));
+    const cumulSnap = { ...cumulative };
+
+    return {
+      month: m, label: m + ' 2026',
+      totalNew, totalCumulative,
+      newBySegment: { ...newThisMonth },
+      cumulBySegment: cumulSnap,
+      onboardHrs, recurringHrs, totalGrowthHrs,
+      baseReqHrs, totalReqHrs, avail, surplus, util, baseUtil,
+      segOnboard, segRecurring
+    };
+  });
+}
+
+// ── Build growth assumptions UI (called once on init) ──
+function buildGrowthAssumptionsUI() {
+  const container = document.getElementById('growthSegAssume');
+  if (!container || container.children.length > 0) return; // already built
+  container.innerHTML = GROWTH_SEGS.map(seg => `
+    <div class="growth-seg-assume">
+      <h4><span class="seg-dot" style="background:${GROWTH_DEFAULTS[seg].color}"></span>${seg}</h4>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">New acct orders/month</span>
+        <input class="growth-assume-input" id="ga_orders_${seg}" type="number" value="${GROWTH_DEFAULTS[seg].newOrdersPerMonth}" step="0.1" onchange="renderGrowth()">
+      </div>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">Portal setup (min/acct)</span>
+        <input class="growth-assume-input" id="ga_portal_${seg}" type="number" value="${GROWTH_DEFAULTS[seg].portalSetupMins}" onchange="renderGrowth()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Pharma setup: ${GROWTH_DEFAULTS[seg].newOrdersPerMonth.toFixed(2)} ord × lines × 10 min<br>
+        Onboard: ${GROWTH_DEFAULTS[seg].portalSetupMins} min/acct (portal+system)
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Build the editable monthly plan table ──
+function buildGrowthPlanTable() {
+  const tbody = document.getElementById('growthPlanBody');
+  tbody.innerHTML = MONTHS.map((m, i) => {
+    const cells = GROWTH_SEGS.map(seg => `
+      <td><input class="growth-input" id="gp_${i}_${seg}" type="number" min="0" value="${growthPlan[i][seg] || 0}" onchange="updateGrowthPlan(${i},'${seg}',this.value)"></td>
+    `).join('');
+    const total = GROWTH_SEGS.reduce((s, seg) => s + (growthPlan[i][seg] || 0), 0);
+    return `<tr>
+      <td>${m} 2026</td>
+      ${cells}
+      <td style="font-weight:700;color:${total > 0 ? 'var(--accent2)' : 'var(--muted)'}">${total}</td>
+    </tr>`;
+  }).join('') + `<tr class="growth-total-row">
+    <td>TOTAL</td>
+    ${GROWTH_SEGS.map(seg => `<td id="gp_total_${seg}">${MONTHS.reduce((s, m, i) => s + (growthPlan[i][seg] || 0), 0)}</td>`).join('')}
+    <td id="gp_grand_total">${MONTHS.reduce((s, m, i) => s + GROWTH_SEGS.reduce((ss, seg) => ss + (growthPlan[i][seg] || 0), 0), 0)}</td>
+  </tr>`;
+}
+
+function updateGrowthPlan(monthIdx, seg, val) {
+  growthPlan[monthIdx][seg] = parseInt(val) || 0;
+  // Update column total
+  const colTotal = MONTHS.reduce((s, m, i) => s + (growthPlan[i][seg] || 0), 0);
+  const el = document.getElementById('gp_total_' + seg);
+  if (el) el.textContent = colTotal;
+  // Update row total
+  const rowTotal = GROWTH_SEGS.reduce((s, sg) => s + (growthPlan[monthIdx][sg] || 0), 0);
+  const rowEl = document.getElementById('gp_' + monthIdx + '_rowtotal');
+  // Update grand total
+  const grandTotal = MONTHS.reduce((s, m, i) => s + GROWTH_SEGS.reduce((ss, sg) => ss + (growthPlan[i][sg] || 0), 0), 0);
+  const gtEl = document.getElementById('gp_grand_total');
+  if (gtEl) gtEl.textContent = grandTotal;
+  renderGrowth();
+}
+
+function clearGrowthPlan() {
+  growthPlan = MONTHS.map(() => Object.fromEntries(GROWTH_SEGS.map(s => [s, 0])));
+  buildGrowthPlanTable();
+  renderGrowth();
+}
+
+// ── Render all growth charts/tables ──
+function renderGrowth() {
+  const a = getAssumptions();
+  const baseModel = calcModel(a);
+  const ga = getGrowthAssumptions();
+  const gm = calcGrowthModel(baseModel, ga, a);
+
+  // ── KPI summary row ──
+  const totalNewAccts = MONTHS.reduce((s, m, i) => s + gm[i].totalNew, 0);
+  const peakOnboard = gm.reduce((best, mo) => mo.onboardHrs > best.onboardHrs ? mo : best, gm[0]);
+  const decRecurring = gm[11].recurringHrs;
+  const monthsAtRisk = gm.filter(mo => mo.util >= 0.9).length;
+  const monthsOver = gm.filter(mo => mo.util >= 1.0).length;
+
+  document.getElementById('gkNewAccts').textContent = totalNewAccts.toLocaleString();
+  document.getElementById('gkNewAcctsSub').textContent = GROWTH_SEGS.map(seg =>
+    MONTHS.reduce((s, m, i) => s + (growthPlan[i][seg] || 0), 0) + ' ' + seg
+  ).filter(s => !s.startsWith('0')).join(' · ') || 'No new accounts planned';
+
+  document.getElementById('gkPeakOnboard').textContent = fmt(peakOnboard.onboardHrs, 1) + ' hrs';
+  document.getElementById('gkPeakOnboardSub').textContent = peakOnboard.label + ' · ' + peakOnboard.totalNew + ' new accounts';
+
+  document.getElementById('gkRecurring').textContent = fmt(decRecurring, 1) + ' hrs';
+  document.getElementById('gkRecurringSub').textContent = gm[11].totalCumulative + ' cumulative new accounts by Dec';
+
+  const capCard = document.getElementById('gkCapCard');
+  document.getElementById('gkCapRisk').textContent = monthsOver > 0 ? monthsOver + ' month(s) OVER' : monthsAtRisk > 0 ? monthsAtRisk + ' near limit' : '✓ All clear';
+  document.getElementById('gkCapRiskSub').textContent = monthsOver > 0 ? '⚠ Headcount addition may be needed' : monthsAtRisk > 0 ? 'Monitor closely — approaching 90%' : 'All months within safe range with current HC';
+  capCard.style.borderLeftColor = monthsOver > 0 ? 'var(--red)' : monthsAtRisk > 0 ? 'var(--yellow)' : 'var(--green)';
+  capCard.style.borderLeftWidth = '4px';
+  capCard.style.borderLeftStyle = 'solid';
+
+  // ── New accounts bar chart ──
+  destroyChart('chartGrowthNew');
+  charts['chartGrowthNew'] = new Chart(document.getElementById('chartGrowthNew'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: GROWTH_SEGS.map(seg => ({
+        label: seg,
+        data: MONTHS.map((m, i) => growthPlan[i][seg] || 0),
+        backgroundColor: GROWTH_DEFAULTS[seg].color,
+        stack: 'new'
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { x: { stacked: true }, y: { stacked: true, title: { display: true, text: 'New Accounts' }, grid: { color: '#f0f0f0' } } }
+    }
+  });
+
+  // ── Cumulative accounts line chart ──
+  destroyChart('chartGrowthCumul');
+  charts['chartGrowthCumul'] = new Chart(document.getElementById('chartGrowthCumul'), {
+    type: 'line',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: GROWTH_SEGS.map(seg => ({
+        label: seg,
+        data: gm.map(mo => mo.cumulBySegment[seg]),
+        borderColor: GROWTH_DEFAULTS[seg].color,
+        backgroundColor: GROWTH_DEFAULTS[seg].color + '20',
+        fill: true, tension: 0.3, pointRadius: 3
+      }))
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { stacked: true, title: { display: true, text: 'Cumulative New Accounts' }, grid: { color: '#f0f0f0' } } }
+    }
+  });
+
+  // ── Capacity stacked bar: base + onboarding + recurring ──
+  destroyChart('chartGrowthCapacity');
+  charts['chartGrowthCapacity'] = new Chart(document.getElementById('chartGrowthCapacity'), {
+    type: 'bar',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        { label: 'Base Required Hrs', data: gm.map(mo => mo.baseReqHrs.toFixed(1)), backgroundColor: '#90e0ef', stack: 'req' },
+        { label: 'Recurring New Volume', data: gm.map(mo => mo.recurringHrs.toFixed(1)), backgroundColor: '#0096c7', stack: 'req' },
+        { label: 'Onboarding (One-Time)', data: gm.map(mo => mo.onboardHrs.toFixed(1)), backgroundColor: '#f4a261', stack: 'req' },
+        { label: 'Available Hours', data: gm.map(mo => mo.avail.toFixed(1)), type: 'line', borderColor: '#2ecc71', borderDash: [6,3], borderWidth: 2, pointRadius: 0, fill: false, stack: undefined }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { x: { stacked: true }, y: { stacked: false, title: { display: true, text: 'Hours' }, grid: { color: '#f0f0f0' } } }
+    }
+  });
+
+  // ── Utilization comparison ──
+  destroyChart('chartGrowthUtil');
+  charts['chartGrowthUtil'] = new Chart(document.getElementById('chartGrowthUtil'), {
+    type: 'line',
+    data: {
+      labels: MONTH_LABELS,
+      datasets: [
+        { label: 'Util w/ Growth', data: gm.map(mo => (mo.util * 100).toFixed(1)),
+          borderColor: '#e76f51', backgroundColor: 'rgba(231,111,81,0.08)', fill: true, tension: 0.3, pointRadius: 4,
+          pointBackgroundColor: gm.map(mo => mo.util >= 1 ? '#e74c3c' : mo.util >= 0.9 ? '#f39c12' : '#e76f51') },
+        { label: 'Util (Base Only)', data: gm.map(mo => (mo.baseUtil * 100).toFixed(1)),
+          borderColor: '#0096c7', borderDash: [5,3], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 },
+        { label: '90% Threshold', data: Array(12).fill(90), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
+        { label: '100% Limit',    data: Array(12).fill(100), borderColor: '#e74c3c', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false }
+      ]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { title: { display: true, text: '%' }, min: 40, max: 115, grid: { color: '#f0f0f0' } } }
+    }
+  });
+
+  // ── Detail table ──
+  const tbody = document.getElementById('growthDetailBody');
+  tbody.innerHTML = gm.map(mo => `
+    <tr style="${mo.util >= 1 ? 'background:#fdecea' : mo.util >= 0.9 ? 'background:#fff8e6' : ''}">
+      <td><strong>${mo.label}</strong></td>
+      <td class="num">${mo.totalNew > 0 ? '<strong>+' + mo.totalNew + '</strong>' : '—'}</td>
+      <td class="num">${mo.onboardHrs > 0 ? fmt(mo.onboardHrs, 1) : '—'}</td>
+      <td class="num">${fmt(mo.recurringHrs, 1)}</td>
+      <td class="num"><strong>${fmt(mo.totalGrowthHrs, 1)}</strong></td>
+      <td class="num">${fmt(mo.baseReqHrs, 1)}</td>
+      <td class="num"><strong>${fmt(mo.totalReqHrs, 1)}</strong></td>
+      <td class="num">${fmt(mo.avail, 1)}</td>
+      <td class="num" style="color:${mo.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${mo.surplus >= 0 ? '+' : ''}${fmt(mo.surplus, 1)}</td>
+      <td class="num"><strong>${fmtPct(mo.util)}</strong></td>
+      <td class="num" style="color:var(--muted)">${fmtPct(mo.baseUtil)}</td>
+      <td>${utilFlag(mo.util)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── GSheet sync for growth plan ──
+async function syncGrowthFromSheet() {
+  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
+  if (!cfg.sheetId || !cfg.apiKey) {
+    alert('Please configure your Google Sheet ID and API Key first (⚙ GSheet Config button).');
+    return;
+  }
+  const range = document.getElementById('growthSheetRange').value.trim() || 'GrowthPlan!B2:F13';
+  const spinner = document.getElementById('growthSyncSpinner');
+  const label = document.getElementById('growthSyncLabel');
+  spinner.classList.remove('hidden'); label.textContent = ' Syncing…';
+
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${encodeURIComponent(range)}?key=${cfg.apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const data = await res.json();
+    const rows = data.values || [];
+
+    // Expect rows[i] = [Enterprise, Gold, Silver, Momentum, Growth] for month i
+    let updated = 0;
+    rows.forEach((row, i) => {
+      if (i < 12) {
+        GROWTH_SEGS.forEach((seg, j) => {
+          const val = parseInt(row[j]) || 0;
+          growthPlan[i][seg] = val;
+          const el = document.getElementById(`gp_${i}_${seg}`);
+          if (el) el.value = val;
+          updated++;
+        });
+      }
+    });
+    document.getElementById('growthSyncStatus').textContent = `Synced ${rows.length} months · ${new Date().toLocaleTimeString()}`;
+    buildGrowthPlanTable();
+    renderGrowth();
+  } catch(e) {
+    alert(`Growth plan sync failed: ${e.message}\n\nExpected range format: rows=Jan–Dec, cols=Enterprise/Gold/Silver/Momentum/Growth`);
+    document.getElementById('growthSyncStatus').textContent = 'Sync failed';
+  } finally {
+    spinner.classList.add('hidden'); label.textContent = '↻ Sync Growth Plan';
+  }
+}
+
+function renderAll(a, model) {
+  renderOverview(a, model);
+  renderSegments(a, model);
+  renderTasks(a, model);
+  renderForecast(a, model);
+  renderSpend(a);
+  renderPharmaLines();
+  renderSectionF(a);
+  renderGrowth();
+}
+
+function resetAssumptions() {
+  const defaults = {
+    a_hoursPerDay: 8, a_daysPerMonth: 21.5, a_weeksPerMonth: 4.3, a_lunch: 30, a_break1: 15, a_break2: 15, a_meetingHrsWk: 1,
+    b_monOrders: 110, b_tueThuOrders: 60, b_friOrders: 40, b_pharmaLines: 1.02, b_pharmaLineMins: 10,
+    c_netNew: 100, c_coa: 44, c_migration: 25, c_pharmaAccts: 6.57, c_setupMins: 15, c_coaMins: 15, c_inquiries: 12, c_inquiryMins: 15,
+    d_totalOAs: 9, d_leadPct: 0.15,
+    f_trackOrders: 65, f_trackMins: 7, f_emailSweeps: 2, f_emailMins: 20, f_shopifySweeps: 1, f_shopifyMins: 20,
+    f_handoffOAs: 8, f_handoffMins: 10, f_merzRuns: 1, f_merzMins: 60, f_portalChecks: 1, f_portalMins: 15,
+    f_reconMonth: 3, f_reconMins: 120, f_priceIssues: 3, f_priceMins: 3, f_sopUpdates: 5, f_sopMins: 10,
+    s_jan: 1.01, s_feb: 1.22, s_mar: 1.17, s_apr: 0.86, s_may: 0.86, s_jun: 0.89, s_jul: 1.02, s_aug: 1.04, s_sep: 1.04, s_oct: 1.01, s_nov: 1.06, s_dec: 1.05,
+    g_goldP: 41, g_goldO: 4.34, g_entP: 21, g_entO: 3.96, g_silvP: 331, g_silvO: 2.77, g_momP: 143, g_momO: 1.73, g_growP: 173, g_growO: 1.64
+  };
+  Object.entries(defaults).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+  recalculate();
+}
+
+// ═══════════════════════════════════════════════════
+//  TAB MANAGEMENT
+// ═══════════════════════════════════════════════════
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+//  CONFIG / GSHEET
+// ═══════════════════════════════════════════════════
+function toggleConfig() {
+  const p = document.getElementById('configPanel');
+  p.classList.toggle('open');
+  // Load saved config
+  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
+  if (cfg.sheetId) document.getElementById('cfgSheetId').value = cfg.sheetId;
+  if (cfg.apiKey) document.getElementById('cfgApiKey').value = cfg.apiKey;
+  if (cfg.orderRange) document.getElementById('cfgOrderRange').value = cfg.orderRange;
+  if (cfg.hcRange) document.getElementById('cfgHCRange').value = cfg.hcRange;
+}
+
+function saveConfig() {
+  const cfg = {
+    sheetId: document.getElementById('cfgSheetId').value.trim(),
+    apiKey: document.getElementById('cfgApiKey').value.trim(),
+    orderRange: document.getElementById('cfgOrderRange').value.trim() || 'Assumptions!B6',
+    hcRange: document.getElementById('cfgHCRange').value.trim() || 'Assumptions!B13',
+    growthRange: document.getElementById('growthSheetRange').value.trim() || 'GrowthPlan!B2:F13',
+  };
+  localStorage.setItem('moxieCapConfig', JSON.stringify(cfg));
+  document.getElementById('configPanel').classList.remove('open');
+  document.getElementById('syncStatus').textContent = 'Config saved · Ready to sync';
+}
+
+async function syncFromGSheet() {
+  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
+  if (!cfg.sheetId || !cfg.apiKey) {
+    alert('Please configure your Google Sheet ID and API Key first (⚙ GSheet Config button).');
+    toggleConfig();
+    return;
+  }
+  const btn = document.getElementById('syncBtn');
+  const label = document.getElementById('syncLabel');
+  const spinner = document.getElementById('syncSpinner');
+  label.textContent = ' Syncing…';
+  spinner.classList.remove('hidden');
+
+  try {
+    // Fetch multiple ranges in one batch request
+    const ranges = [
+      'Assumptions!B2', 'Assumptions!B3', 'Assumptions!B4',  // work hours
+      'Assumptions!B5', 'Assumptions!B7', 'Assumptions!B8', 'Assumptions!B9', // breaks
+      'Assumptions!B12', 'Assumptions!B6',                                       // meetings, gross hrs
+      'Assumptions!B19', 'Assumptions!B20', 'Assumptions!B21',                   // daily orders
+      'Assumptions!B22', 'Assumptions!B23',                                       // pharma
+      'Assumptions!B2:B3', // staffing
+      cfg.hcRange || 'Assumptions!B13',
+    ].map(r => `ranges=${encodeURIComponent(r)}`).join('&');
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values:batchGet?${ranges}&key=${cfg.apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`GSheet API error: ${res.status} ${res.statusText}`);
+    const data = await res.json();
+
+    // Helper to get value from batch result
+    const getVal = (idx) => {
+      try { return parseFloat(data.valueRanges[idx]?.values?.[0]?.[0]) || null; } catch { return null; }
+    };
+
+    // Map fetched values to assumption inputs
+    const updates = {
+      a_hoursPerDay:   getVal(0),
+      a_daysPerMonth:  getVal(2),
+      a_weeksPerMonth: getVal(4),
+      a_lunch:         getVal(5),
+      a_break1:        getVal(6),
+      a_break2:        getVal(7),
+      a_meetingHrsWk:  getVal(11),
+      b_monOrders:     getVal(12),
+      b_tueThuOrders:  getVal(13),
+      b_friOrders:     getVal(14),
+      b_pharmaLines:   getVal(15),
+      b_pharmaLineMins:getVal(16),
+      d_totalOAs:      getVal(17),
+    };
+    let updated = 0;
+    Object.entries(updates).forEach(([id, val]) => {
+      if (val !== null) { document.getElementById(id).value = val; updated++; }
+    });
+
+    const now = new Date().toLocaleTimeString();
+    document.getElementById('syncStatus').textContent = `Synced ${updated} values · ${now}`;
+    recalculate();
+  } catch (e) {
+    console.error(e);
+    document.getElementById('syncStatus').textContent = `Sync failed: ${e.message}`;
+    alert(`GSheet sync failed.\n\nError: ${e.message}\n\nTips:\n• Verify your Sheet ID (from the URL: /spreadsheets/d/[ID]/)\n• Verify your API Key is enabled for Sheets API\n• Ensure the sheet is shared (Anyone with the link can view)\n• Check range names match your sheet exactly`);
+  } finally {
+    label.textContent = '↻ Sync GSheet';
+    spinner.classList.add('hidden');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  buildGrowthAssumptionsUI();  // build growth assumption inputs before recalc reads them
+  buildGrowthPlanTable();       // build the 12×5 editable plan grid
+  recalculate();
+  // Load saved config + growth range if exists
+  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
+  if (cfg.sheetId) document.getElementById('syncStatus').textContent = 'GSheet configured · Click to sync';
+  if (cfg.growthRange) document.getElementById('growthSheetRange').value = cfg.growthRange;
+});
+</script>
+</body>
+</html>
