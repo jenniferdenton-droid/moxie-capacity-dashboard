@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moxie Supplies — Operations Capacity Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
   :root {
     --primary: #1a2e4a;
@@ -837,16 +838,15 @@
             <td style="padding:10px 12px;color:var(--muted)">Hiring trigger zone. Quality and burnout risk are real. Headcount decision should be in motion.</td>
           </tr>
           <tr style="background:rgba(231,76,60,0.08)">
-            <td style="padding:10px 12px"><span style="font-size:15px">🚨</span> <strong style="color:#e74c3c">Over</strong></td>
+            <td style="padding:10px 12px"><span style="font-size:15px">🚨</span> <strong style="color:#e74c3c">Over 90% — Hire Now</strong></td>
             <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">&gt; 90%</td>
-            <td style="padding:10px 12px;color:var(--muted)">Active headcount problem. Team is over capacity; immediate action required to reduce load or add staff.</td>
+            <td style="padding:10px 12px;color:var(--muted)">Over the critical utilization threshold. A small hrs surplus may remain but there is no buffer for spikes, PTO, or volume growth. Headcount action is urgent.</td>
           </tr>
         </tbody>
       </table>
       <p style="font-size:11.5px;color:var(--muted);margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
-        <strong>Note:</strong> The model uses <strong>80% as the Caution flag</strong> in real-time calculations (matching current ops norms),
-        but operationally treat <strong>75–80% as the hiring consideration trigger</strong> — model utilization tends to understate true load
-        due to unplanned volume, training, and onboarding overhead.
+        <strong>Note:</strong> Model utilization tends to understate true load due to unplanned volume, training, and onboarding overhead.
+        Treat the <strong>Caution zone (75%+) as the active hiring consideration trigger</strong> — by the time the model shows At Risk, you're already there operationally.
       </p>
     </div>
 
@@ -929,6 +929,9 @@
 </div><!-- /container -->
 
 <script>
+// Unregister datalabels globally — only applied per-chart via plugins:[] array
+if (typeof ChartDataLabels !== 'undefined') Chart.unregister(ChartDataLabels);
+
 // ═══════════════════════════════════════════════════
 //  DATA & STATE
 // ═══════════════════════════════════════════════════
@@ -1161,16 +1164,16 @@ function calcModel(a) {
 function fmt(n, dec=0) { return isNaN(n) ? '—' : n.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 function fmtPct(n) { return (n*100).toFixed(1) + '%'; }
 function utilBadge(u) {
-  if (u >= 1.0) return ['🔴 OVER CAPACITY', 'pill pill-red'];
-  if (u >= 0.9) return ['🔴 AT RISK', 'pill pill-red'];
-  if (u >= 0.8) return ['🟡 CAUTION', 'pill pill-yellow'];
-  return ['🟢 OK', 'pill pill-green'];
+  if (u >= 0.9)  return ['🚨 OVER 90% — HIRE NOW', 'pill pill-red'];
+  if (u >= 0.85) return ['🔴 AT RISK — START HIRING', 'pill pill-red'];
+  if (u >= 0.75) return ['🟡 CAUTION — MONITOR', 'pill pill-yellow'];
+  return ['🟢 HEALTHY', 'pill pill-green'];
 }
 function utilFlag(u) {
-  if (u >= 1.0) return '<span class="flag flag-over">🔴 Over</span>';
-  if (u >= 0.9) return '<span class="flag flag-over">🔴 At Risk</span>';
-  if (u >= 0.8) return '<span class="flag flag-warn">🟡 Caution</span>';
-  return '<span class="flag flag-ok">🟢 OK</span>';
+  if (u >= 0.9)  return '<span class="flag flag-over">🚨 Over 90%</span>';
+  if (u >= 0.85) return '<span class="flag flag-over">🔴 At Risk 85%+</span>';
+  if (u >= 0.75) return '<span class="flag flag-warn">🟡 Caution</span>';
+  return '<span class="flag flag-ok">🟢 Healthy</span>';
 }
 // ── Calc Tooltip Helper ──
 // Wraps a display value with a hover tooltip showing the formula that produced it.
@@ -1202,7 +1205,7 @@ function updateKPIs() {
 
   document.getElementById('kvUtil').textContent = fmtPct(util);
   document.getElementById('kbUtil').textContent = badgeText;
-  document.getElementById('kbUtil').className = 'kpi-badge ' + (util >= 0.9 ? 'badge-red' : util >= 0.8 ? 'badge-yellow' : 'badge-green');
+  document.getElementById('kbUtil').className = 'kpi-badge ' + (util >= 0.85 ? 'badge-red' : util >= 0.75 ? 'badge-yellow' : 'badge-green');
 
   document.getElementById('kvAvail').textContent = fmt(m.availHrs, 1);
   document.getElementById('ksAvail').textContent = fmt(model.effectiveFTE, 2) + ' eff. FTEs × ' + fmt(model.netHrsOA, 1) + ' net hrs/OA';
@@ -1232,10 +1235,10 @@ function updateKPIs() {
   document.getElementById('driverSeg').textContent = topSeg.name;
   document.getElementById('driverSegPct').textContent = fmt(topSeg.ordHrs, 1) + ' order hrs · ' + fmtPct(topSeg.ordHrs / totalSegHrs) + ' of order hours';
 
-  // Peak utilization month
-  const peakMonth = model.months.reduce((best, mo) => mo.util > best.util ? mo : best, model.months[0]);
-  document.getElementById('driverPeakMonth').textContent = peakMonth.label;
-  document.getElementById('driverPeakPct').textContent = fmtPct(peakMonth.util) + ' utilization · ' + fmt(peakMonth.surplus, 0) + ' hrs surplus';
+  // Peak utilization month — use growth-adjusted gm data to match all other views
+  const peakGM = gm.reduce((best, mo) => mo.util > best.util ? mo : best, gm[0]);
+  document.getElementById('driverPeakMonth').textContent = peakGM.label;
+  document.getElementById('driverPeakPct').textContent = fmtPct(peakGM.util) + ' utilization · ' + fmt(peakGM.surplus, 0) + ' hrs surplus';
 }
 
 // ═══════════════════════════════════════════════════
@@ -1243,11 +1246,12 @@ function updateKPIs() {
 // ═══════════════════════════════════════════════════
 function renderOverview(a, model, gm) {
   const ms = model.months;
-  const avail = ms.map(m => m.availHrs);
-  const req = ms.map(m => m.totalReqHrs);
-  const utils = ms.map(m => m.util * 100);
+  // Use growth-adjusted numbers if available, fall back to base model
+  const avail = ms.map((m, i) => gm && gm[i] ? gm[i].avail       : m.availHrs);
+  const req   = ms.map((m, i) => gm && gm[i] ? gm[i].totalReqHrs : m.totalReqHrs);
+  const utils = ms.map((m, i) => gm && gm[i] ? gm[i].util * 100  : m.util * 100);
 
-  // Capacity bar chart
+  // Capacity bar chart — growth-adjusted avail vs required
   destroyChart('chartCapacity');
   charts['chartCapacity'] = new Chart(document.getElementById('chartCapacity'), {
     type: 'bar',
@@ -1255,29 +1259,29 @@ function renderOverview(a, model, gm) {
       labels: MONTH_LABELS,
       datasets: [
         { label: 'Available Hours', data: avail, backgroundColor: '#e8f4fd', borderColor: '#0096c7', borderWidth: 1.5 },
-        { label: 'Required Hours',  data: req,   backgroundColor: ms.map(m => m.util >= 0.9 ? '#fdecea' : m.util >= 0.8 ? '#fff8e6' : '#e8f8f0'), borderColor: ms.map(m => m.util >= 0.9 ? '#e74c3c' : m.util >= 0.8 ? '#f39c12' : '#2ecc71'), borderWidth: 1.5 }
+        { label: 'Required Hours',  data: req,   backgroundColor: utils.map(u => u >= 90 ? '#fdecea' : u >= 85 ? '#fde8e8' : u >= 75 ? '#fff8e6' : '#e8f8f0'), borderColor: utils.map(u => u >= 90 ? '#e74c3c' : u >= 85 ? '#e74c3c' : u >= 75 ? '#f39c12' : '#2ecc71'), borderWidth: 1.5 }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } },
       scales: { y: { title: { display: true, text: 'Hours' }, grid: { color: '#f0f0f0' } } } }
   });
 
-  // Utilization line
+  // Utilization line — growth-adjusted, threshold lines match Reference tab zones
   destroyChart('chartUtil');
   charts['chartUtil'] = new Chart(document.getElementById('chartUtil'), {
     type: 'line',
     data: {
       labels: MONTH_LABELS,
       datasets: [
-        { label: 'Utilization %', data: utils, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointBackgroundColor: utils.map(u => u >= 90 ? '#e74c3c' : u >= 80 ? '#f39c12' : '#2ecc71'), pointRadius: 5 },
-        { label: '90% At Risk', data: Array(12).fill(90), borderColor: '#e74c3c', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false },
-        { label: '80% Caution', data: Array(12).fill(80), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1.5, pointRadius: 0, fill: false },
-        { label: '100% Limit', data: Array(12).fill(100), borderColor: '#e74c3c', borderDash: [4,3], borderWidth: 1.5, pointRadius: 0, fill: false }
+        { label: 'Utilization %', data: utils, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointBackgroundColor: utils.map(u => u >= 90 ? '#e74c3c' : u >= 85 ? '#e74c3c' : u >= 75 ? '#f39c12' : '#2ecc71'), pointRadius: 5 },
+        { label: '🚨 90% Over',    data: Array(12).fill(90), borderColor: '#c0392b', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: '🔴 85% At Risk', data: Array(12).fill(85), borderColor: '#e74c3c', borderDash: [5,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: '🟡 75% Caution', data: Array(12).fill(75), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1.5, pointRadius: 0, fill: false }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false,
       plugins: { legend: { position: 'top' } },
-      scales: { y: { title: { display: true, text: '%' }, min: 40, max: 110, grid: { color: '#f0f0f0' } } } }
+      scales: { y: { title: { display: true, text: '%' }, min: 40, max: 115, grid: { color: '#f0f0f0' } } } }
   });
 
   // Overview table — uses growth-adjusted totals so numbers match the Growth Model tab
@@ -1296,7 +1300,7 @@ function renderOverview(a, model, gm) {
     const hcReq     = noa > 0 ? totalReq / noa : 0;
 
     return `
-    <tr style="${util >= 0.9 ? 'background:#fdecea' : util >= 0.8 ? 'background:#fff8e6' : ''}">
+    <tr style="${util >= 0.85 ? 'background:#fdecea' : util >= 0.75 ? 'background:#fff8e6' : ''}">
       <td><strong>${m.label}</strong></td>
       <td class="num">${tip(m.sm.toFixed(2),
         `Seasonal index for ${m.month}\nBase = annual average = 1.00\nAdjusts all variable tasks up or down`)}</td>
@@ -1386,11 +1390,37 @@ function renderSegments(a, model) {
   destroyChart('chartSegUtil');
   charts['chartSegUtil'] = new Chart(document.getElementById('chartSegUtil'), {
     type: 'doughnut',
+    plugins: [ChartDataLabels],
     data: {
       labels: segDetail.map(s => s.name),
-      datasets: [{ data: segDetail.map(s => s.ordHrs.toFixed(1)), backgroundColor: segDetail.map(s => s.color), hoverOffset: 6 }]
+      datasets: [{ data: segDetail.map(s => parseFloat(s.ordHrs.toFixed(1))), backgroundColor: segDetail.map(s => s.color), hoverOffset: 6 }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right' },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.parsed;
+              const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+              const pct = total > 0 ? (val / total * 100).toFixed(1) : '0.0';
+              return ` ${ctx.label}: ${val.toFixed(1)} hrs (${pct}%)`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { size: 11, weight: 'bold' },
+          formatter: function(value, ctx) {
+            const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+            const pct = total > 0 ? (value / total * 100) : 0;
+            return pct >= 4 ? pct.toFixed(1) + '%' : '';
+          }
+        }
+      }
+    }
   });
 
   // Stacked bar: full year by segment
@@ -1458,11 +1488,37 @@ function renderTasks(a, model) {
   ];
   charts['chartTaskDonut'] = new Chart(document.getElementById('chartTaskDonut'), {
     type: 'doughnut',
+    plugins: [ChartDataLabels],
     data: {
       labels: tasks.map(t => t.name),
-      datasets: [{ data: tasks.map(t => t.hrs.toFixed(1)), backgroundColor: taskColors, hoverOffset: 6 }]
+      datasets: [{ data: tasks.map(t => parseFloat(t.hrs.toFixed(1))), backgroundColor: taskColors, hoverOffset: 6 }]
     },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { font: { size: 11 }, padding: 10 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const val = ctx.parsed;
+              const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+              const pct = total > 0 ? (val / total * 100).toFixed(1) : '0.0';
+              return ` ${ctx.label}: ${val.toFixed(1)} hrs (${pct}%)`;
+            }
+          }
+        },
+        datalabels: {
+          color: '#fff',
+          font: { size: 11, weight: 'bold' },
+          formatter: function(value, ctx) {
+            const total = ctx.dataset.data.reduce((s, v) => s + v, 0);
+            const pct = total > 0 ? (value / total * 100) : 0;
+            return pct >= 4 ? pct.toFixed(1) + '%' : '';  // hide label if slice < 4% to avoid clutter
+          }
+        }
+      }
+    }
   });
 
   // Task table
@@ -2101,12 +2157,12 @@ function renderGrowth() {
       datasets: [
         { label: 'Util w/ Growth', data: gm.map(mo => (mo.util * 100).toFixed(1)),
           borderColor: '#e76f51', backgroundColor: 'rgba(231,111,81,0.08)', fill: true, tension: 0.3, pointRadius: 4,
-          pointBackgroundColor: gm.map(mo => mo.util >= 0.9 ? '#e74c3c' : mo.util >= 0.8 ? '#f39c12' : '#e76f51') },
+          pointBackgroundColor: gm.map(mo => mo.util >= 0.9 ? '#c0392b' : mo.util >= 0.85 ? '#e74c3c' : mo.util >= 0.75 ? '#f39c12' : '#e76f51') },
         { label: 'Util (Base Only)', data: gm.map(mo => (mo.baseUtil * 100).toFixed(1)),
           borderColor: '#0096c7', borderDash: [5,3], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 },
-        { label: '90% At Risk', data: Array(12).fill(90), borderColor: '#e74c3c', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
-        { label: '80% Caution', data: Array(12).fill(80), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
-        { label: '100% Limit',    data: Array(12).fill(100), borderColor: '#e74c3c', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false }
+        { label: '🚨 90% Over',    data: Array(12).fill(90), borderColor: '#c0392b', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: '🔴 85% At Risk', data: Array(12).fill(85), borderColor: '#e74c3c', borderDash: [5,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: '🟡 75% Caution', data: Array(12).fill(75), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1.5, pointRadius: 0, fill: false }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false,
@@ -2120,7 +2176,7 @@ function renderGrowth() {
   tbody.innerHTML = gm.map((mo, i) => {
     const sm = a.seasonal[i];
     return `
-    <tr style="${mo.util >= 0.9 ? 'background:#fdecea' : mo.util >= 0.8 ? 'background:#fff8e6' : ''}">
+    <tr style="${mo.util >= 0.85 ? 'background:#fdecea' : mo.util >= 0.75 ? 'background:#fff8e6' : ''}">
       <td><strong>${mo.label}</strong></td>
       <td class="num">${mo.totalNew > 0 ? '<strong>+' + mo.totalNew + '</strong>' : '—'}</td>
       <td class="num">${mo.onboardHrs > 0 ? tip(fmt(mo.onboardHrs, 1),
