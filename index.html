@@ -299,6 +299,14 @@
     </div>
   </div>
 
+  <!-- Utilization Color Key -->
+  <div style="display:flex;align-items:center;gap:18px;padding:6px 18px;background:#f8fafc;border:1px solid var(--border);border-radius:8px;margin:0 0 8px 0;font-size:12px;flex-wrap:wrap">
+    <span style="font-weight:700;color:var(--muted);letter-spacing:.03em">UTILIZATION KEY</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#2ecc71"></span><strong style="color:#2ecc71">🟢 OK</strong> &nbsp;–&nbsp; below 80%</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#f39c12"></span><strong style="color:#f39c12">🟡 Caution</strong> &nbsp;–&nbsp; 80–89% · monitor closely</span>
+    <span style="display:flex;align-items:center;gap:5px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#e74c3c"></span><strong style="color:#e74c3c">🔴 At Risk</strong> &nbsp;–&nbsp; 90%+ · headcount review needed</span>
+  </div>
+
   <!-- Driver Flag Bar -->
   <div class="driver-bar" id="driverBar">
     <div class="driver-chip top-driver">
@@ -355,7 +363,7 @@
         <div class="chart-wrap"><canvas id="chartCapacity"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-title">Monthly Utilization % <span style="font-weight:400;color:var(--muted);font-size:11px">90% threshold shown</span></div>
+        <div class="card-title">Monthly Utilization % <span style="font-weight:400;color:var(--muted);font-size:11px">🟡 80% caution &nbsp;🔴 90% at-risk</span></div>
         <div class="chart-wrap"><canvas id="chartUtil"></canvas></div>
       </div>
     </div>
@@ -1067,12 +1075,14 @@ function fmt(n, dec=0) { return isNaN(n) ? '—' : n.toFixed(dec).replace(/\B(?=
 function fmtPct(n) { return (n*100).toFixed(1) + '%'; }
 function utilBadge(u) {
   if (u >= 1.0) return ['🔴 OVER CAPACITY', 'pill pill-red'];
-  if (u >= 0.9) return ['🟡 NEAR LIMIT', 'pill pill-yellow'];
+  if (u >= 0.9) return ['🔴 AT RISK', 'pill pill-red'];
+  if (u >= 0.8) return ['🟡 CAUTION', 'pill pill-yellow'];
   return ['🟢 OK', 'pill pill-green'];
 }
 function utilFlag(u) {
   if (u >= 1.0) return '<span class="flag flag-over">🔴 Over</span>';
-  if (u >= 0.9) return '<span class="flag flag-warn">🟡 Near Limit</span>';
+  if (u >= 0.9) return '<span class="flag flag-over">🔴 At Risk</span>';
+  if (u >= 0.8) return '<span class="flag flag-warn">🟡 Caution</span>';
   return '<span class="flag flag-ok">🟢 OK</span>';
 }
 function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
@@ -1089,7 +1099,7 @@ function updateKPIs() {
 
   document.getElementById('kvUtil').textContent = fmtPct(m.util);
   document.getElementById('kbUtil').textContent = badgeText;
-  document.getElementById('kbUtil').className = 'kpi-badge ' + (m.util >= 1 ? 'badge-red' : m.util >= 0.9 ? 'badge-yellow' : 'badge-green');
+  document.getElementById('kbUtil').className = 'kpi-badge ' + (m.util >= 0.9 ? 'badge-red' : m.util >= 0.8 ? 'badge-yellow' : 'badge-green');
 
   document.getElementById('kvAvail').textContent = fmt(m.availHrs, 1);
   document.getElementById('ksAvail').textContent = fmt(a.effectiveFTE || model.effectiveFTE, 2) + ' effective FTEs × ' + fmt(model.netHrsOA, 1) + ' net hrs/OA';
@@ -1140,7 +1150,7 @@ function renderOverview(a, model) {
       labels: MONTH_LABELS,
       datasets: [
         { label: 'Available Hours', data: avail, backgroundColor: '#e8f4fd', borderColor: '#0096c7', borderWidth: 1.5 },
-        { label: 'Required Hours',  data: req,   backgroundColor: ms.map(m => m.util >= 1 ? '#fdecea' : m.util >= 0.9 ? '#fff8e6' : '#e8f8f0'), borderColor: ms.map(m => m.util >= 1 ? '#e74c3c' : m.util >= 0.9 ? '#f39c12' : '#2ecc71'), borderWidth: 1.5 }
+        { label: 'Required Hours',  data: req,   backgroundColor: ms.map(m => m.util >= 0.9 ? '#fdecea' : m.util >= 0.8 ? '#fff8e6' : '#e8f8f0'), borderColor: ms.map(m => m.util >= 0.9 ? '#e74c3c' : m.util >= 0.8 ? '#f39c12' : '#2ecc71'), borderWidth: 1.5 }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } },
@@ -1154,8 +1164,9 @@ function renderOverview(a, model) {
     data: {
       labels: MONTH_LABELS,
       datasets: [
-        { label: 'Utilization %', data: utils, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointBackgroundColor: utils.map(u => u >= 100 ? '#e74c3c' : u >= 90 ? '#f39c12' : '#2ecc71'), pointRadius: 5 },
-        { label: '90% Threshold', data: Array(12).fill(90), borderColor: '#f39c12', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: 'Utilization %', data: utils, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointBackgroundColor: utils.map(u => u >= 90 ? '#e74c3c' : u >= 80 ? '#f39c12' : '#2ecc71'), pointRadius: 5 },
+        { label: '90% At Risk', data: Array(12).fill(90), borderColor: '#e74c3c', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: '80% Caution', data: Array(12).fill(80), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1.5, pointRadius: 0, fill: false },
         { label: '100% Limit', data: Array(12).fill(100), borderColor: '#e74c3c', borderDash: [4,3], borderWidth: 1.5, pointRadius: 0, fill: false }
       ]
     },
@@ -1398,20 +1409,28 @@ function renderForecast(a, model) {
     </tr>
   `).join('');
 
-  // Forecast orders + capacity line chart
+  // Forecast orders + true order headroom chart
+  // "Order headroom" = hours remaining after fixed ops + account tasks, converted back to max orders
   destroyChart('chartForecast');
-  const capacityLimit = Array(12).fill(avail / (a.pharmaLineMins / 60) / a.pharmaLines);
+  const orderHeadroom = MONTHS.map((m, i) => {
+    const nonOrderHrs = model.months[i].fixedOpsHrs + model.months[i].accountHrs;
+    const hrsLeftForOrders = avail - nonOrderHrs;  // hours available after all non-order work
+    const maxOrders = hrsLeftForOrders / (a.pharmaLines * a.pharmaLineMins / 60); // convert to orders
+    return Math.max(0, Math.round(maxOrders));
+  });
   charts['chartForecast'] = new Chart(document.getElementById('chartForecast'), {
     type: 'line',
     data: {
       labels: MONTH_LABELS,
       datasets: [
         { label: 'Forecast Orders', data: FORECAST_ORDERS, borderColor: '#0096c7', backgroundColor: 'rgba(0,150,199,0.08)', fill: true, tension: 0.3, pointRadius: 5 },
-        { label: 'Capacity Max (orders eq.)', data: capacityLimit.map(v => Math.round(v)), borderColor: '#e74c3c', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false }
+        { label: 'Order Headroom (after ops & setup)', data: orderHeadroom, borderColor: '#e74c3c', borderDash: [6,3], borderWidth: 1.5, pointRadius: 0, fill: false }
       ]
     },
     options: { responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'top' } },
+      plugins: { legend: { position: 'top' },
+        tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toLocaleString() + ' orders' } }
+      },
       scales: { y: { title: { display: true, text: 'Orders' }, grid: { color: '#f0f0f0' } } } }
   });
 
@@ -1847,7 +1866,7 @@ function renderGrowth() {
   const totalNewAccts = MONTHS.reduce((s, m, i) => s + gm[i].totalNew, 0);
   const peakOnboard = gm.reduce((best, mo) => mo.onboardHrs > best.onboardHrs ? mo : best, gm[0]);
   const decRecurring = gm[11].recurringHrs;
-  const monthsAtRisk = gm.filter(mo => mo.util >= 0.9).length;
+  const monthsAtRisk = gm.filter(mo => mo.util >= 0.8 && mo.util < 0.9).length;
   const monthsOver = gm.filter(mo => mo.util >= 1.0).length;
 
   document.getElementById('gkNewAccts').textContent = totalNewAccts.toLocaleString();
@@ -1863,7 +1882,7 @@ function renderGrowth() {
 
   const capCard = document.getElementById('gkCapCard');
   document.getElementById('gkCapRisk').textContent = monthsOver > 0 ? monthsOver + ' month(s) OVER' : monthsAtRisk > 0 ? monthsAtRisk + ' near limit' : '✓ All clear';
-  document.getElementById('gkCapRiskSub').textContent = monthsOver > 0 ? '⚠ Headcount addition may be needed' : monthsAtRisk > 0 ? 'Monitor closely — approaching 90%' : 'All months within safe range with current HC';
+  document.getElementById('gkCapRiskSub').textContent = monthsOver > 0 ? '⚠ Headcount addition may be needed' : monthsAtRisk > 0 ? '🟡 Caution zone (80–90%) — monitor closely' : 'All months within safe range with current HC';
   capCard.style.borderLeftColor = monthsOver > 0 ? 'var(--red)' : monthsAtRisk > 0 ? 'var(--yellow)' : 'var(--green)';
   capCard.style.borderLeftWidth = '4px';
   capCard.style.borderLeftStyle = 'solid';
@@ -1935,10 +1954,11 @@ function renderGrowth() {
       datasets: [
         { label: 'Util w/ Growth', data: gm.map(mo => (mo.util * 100).toFixed(1)),
           borderColor: '#e76f51', backgroundColor: 'rgba(231,111,81,0.08)', fill: true, tension: 0.3, pointRadius: 4,
-          pointBackgroundColor: gm.map(mo => mo.util >= 1 ? '#e74c3c' : mo.util >= 0.9 ? '#f39c12' : '#e76f51') },
+          pointBackgroundColor: gm.map(mo => mo.util >= 0.9 ? '#e74c3c' : mo.util >= 0.8 ? '#f39c12' : '#e76f51') },
         { label: 'Util (Base Only)', data: gm.map(mo => (mo.baseUtil * 100).toFixed(1)),
           borderColor: '#0096c7', borderDash: [5,3], borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3 },
-        { label: '90% Threshold', data: Array(12).fill(90), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
+        { label: '90% At Risk', data: Array(12).fill(90), borderColor: '#e74c3c', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
+        { label: '80% Caution', data: Array(12).fill(80), borderColor: '#f39c12', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false },
         { label: '100% Limit',    data: Array(12).fill(100), borderColor: '#e74c3c', borderDash: [4,2], borderWidth: 1, pointRadius: 0, fill: false }
       ]
     },
@@ -1951,7 +1971,7 @@ function renderGrowth() {
   // ── Detail table ──
   const tbody = document.getElementById('growthDetailBody');
   tbody.innerHTML = gm.map(mo => `
-    <tr style="${mo.util >= 1 ? 'background:#fdecea' : mo.util >= 0.9 ? 'background:#fff8e6' : ''}">
+    <tr style="${mo.util >= 0.9 ? 'background:#fdecea' : mo.util >= 0.8 ? 'background:#fff8e6' : ''}">
       <td><strong>${mo.label}</strong></td>
       <td class="num">${mo.totalNew > 0 ? '<strong>+' + mo.totalNew + '</strong>' : '—'}</td>
       <td class="num">${mo.onboardHrs > 0 ? fmt(mo.onboardHrs, 1) : '—'}</td>
