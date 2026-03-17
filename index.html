@@ -33,21 +33,13 @@
   .topbar-title { font-size: 17px; font-weight: 700; letter-spacing: 0.3px; }
   .topbar-sub { font-size: 12px; opacity: 0.7; margin-top: 1px; }
   .topbar-right { display: flex; align-items: center; gap: 10px; }
-  .sync-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
-  .sync-btn:hover { background: var(--accent2); }
-  .sync-status { font-size: 11px; opacity: 0.7; }
-  .config-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 7px 12px; font-size: 12px; cursor: pointer; }
-  .config-btn:hover { background: rgba(255,255,255,0.2); }
 
   /* ── CONFIG PANEL ── */
-  .config-panel { display: none; background: #1a2e4a; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 16px 24px; color: #fff; }
-  .config-panel.open { display: block; }
   .config-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; max-width: 900px; }
   .config-field label { font-size: 11px; opacity: 0.7; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
   .config-field input { width: 100%; padding: 7px 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 5px; color: #fff; font-size: 13px; }
   .config-field input::placeholder { opacity: 0.4; }
   .config-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
-  .save-config-btn { background: var(--accent); color: #fff; border: none; border-radius: 5px; padding: 7px 16px; font-size: 13px; cursor: pointer; }
   .config-note { font-size: 11px; opacity: 0.55; }
 
   /* ── MAIN LAYOUT ── */
@@ -185,9 +177,6 @@
   .growth-assume-label { color: var(--muted); }
   .growth-assume-input { width: 70px; text-align: right; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: #fffbe6; font-size: 12px; font-weight: 600; color: var(--primary); }
   .growth-assume-input:focus { outline: none; border-color: var(--accent); }
-  .gsheet-growth-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-  .gsheet-growth-btn:hover { background: var(--accent2); }
-  .growth-range-input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 12px; width: 200px; }
 
   /* ── SPINNER ── */
   .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
@@ -231,35 +220,6 @@
       <div class="topbar-sub" id="subtitleBar">2026 Model · 9 OAs · 5 Business Segments · 13 Task Categories</div>
     </div>
   </div>
-  <div class="topbar-right">
-    <div class="sync-status" id="syncStatus">Not synced to GSheet</div>
-    <button class="sync-btn" id="syncBtn" onclick="syncFromGSheet()">
-      <span id="syncSpinner" class="spinner hidden"></span>
-      <span id="syncLabel">↻ Sync GSheet</span>
-    </button>
-    <button class="config-btn" onclick="toggleConfig()">⚙ GSheet Config</button>
-  </div>
-</div>
-
-<!-- ═══ CONFIG PANEL ═══ -->
-<div class="config-panel" id="configPanel">
-  <div class="config-grid">
-    <div class="config-field">
-      <label>Google API Key</label>
-      <input type="password" id="cfgApiKey" placeholder="AIzaSy..." />
-    </div>
-    <div class="config-field">
-      <label>Order Volume Range (e.g. Assumptions!B6)</label>
-      <input type="text" id="cfgOrderRange" placeholder="Assumptions!B6" />
-    </div>
-    <div class="config-field">
-      <label>Headcount Range (e.g. Assumptions!B13)</label>
-      <input type="text" id="cfgHCRange" placeholder="Assumptions!B13" />
-    </div>
-  </div>
-  <div class="config-actions">
-    <button class="save-config-btn" onclick="saveConfig()">Save Config</button>
-    <span class="config-note">API Key is saved locally in your browser only · Sheet ID is pre-configured</span>
   </div>
 </div>
 
@@ -364,6 +324,7 @@
     <button class="tab" onclick="showTab('forecast', this)">📈 Forecast</button>
     <button class="tab" onclick="showTab('growth', this)">🚀 Growth Model</button>
     <button class="tab" onclick="showTab('assumptions', this)">⚙ Assumptions</button>
+    <button class="tab" onclick="showTab('reference', this)">📋 Reference</button>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -623,22 +584,6 @@
   ══════════════════════════════════════ -->
   <div class="panel" id="panel-growth">
 
-    <!-- GSheet sync bar -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-      <div style="flex:1;min-width:200px">
-        <div style="font-size:12px;font-weight:700;color:var(--primary)">Growth Planning Doc — GSheet Sync</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Pull new account projections by segment from your planning Google Sheet. Expected format: rows = months Jan–Dec, columns = Enterprise / Gold / Silver / Momentum / Growth</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <input class="growth-range-input" id="growthSheetRange" placeholder="'Monthly Targets'!B403:M407" title="Range: 5 segment rows (Beginner/Experienced/Growth/Silver/Enterprise) × 12 month cols">
-        <button class="gsheet-growth-btn" onclick="syncGrowthFromSheet()">
-          <span id="growthSyncSpinner" class="spinner hidden"></span>
-          <span id="growthSyncLabel">↻ Sync Growth Plan</span>
-        </button>
-        <span style="font-size:11px;color:var(--muted)" id="growthSyncStatus">Uses same API key from ⚙ GSheet Config</span>
-      </div>
-    </div>
-
     <!-- Impact summary KPIs -->
     <div class="impact-row" id="growthImpactRow">
       <div class="impact-card">
@@ -854,6 +799,132 @@
 
     </div><!-- /assumptions-grid -->
   </div><!-- /panel-assumptions -->
+
+  <!-- ═══ REFERENCE TAB ═══ -->
+  <div class="panel" id="panel-reference">
+    <h2 style="margin-bottom:6px">📋 Reference Guide</h2>
+    <p style="color:var(--muted);margin-bottom:28px;font-size:13px">Thresholds and definitions used throughout this dashboard.</p>
+
+    <!-- Headcount Utilization Zones -->
+    <div class="card" style="max-width:640px;margin-bottom:28px">
+      <h3 style="margin-bottom:4px">Headcount Utilization Zones</h3>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:16px">
+        Applies to the <strong>Total Utilization %</strong> shown in Overview, Growth Model, and KPI cards.<br>
+        Utilization = Total Required Hours ÷ Total Available Hours per month.
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <thead>
+          <tr style="background:var(--card-bg);border-bottom:2px solid var(--border)">
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600;width:100px">Zone</th>
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600;width:130px">Utilization</th>
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600">What it means</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🟢</span> <strong style="color:#2ecc71">Healthy</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">&lt; 75%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Comfortable buffer; team can absorb spikes and unplanned volume without strain.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🟡</span> <strong style="color:#f1c40f">Caution</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">75 – 85%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Watch closely. Limited surge capacity. Begin evaluating headcount needs; start hiring process.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🔴</span> <strong style="color:#e74c3c">At Risk</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">85 – 90%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Hiring trigger zone. Quality and burnout risk are real. Headcount decision should be in motion.</td>
+          </tr>
+          <tr style="background:rgba(231,76,60,0.08)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🚨</span> <strong style="color:#e74c3c">Over</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">&gt; 90%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Active headcount problem. Team is over capacity; immediate action required to reduce load or add staff.</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:11.5px;color:var(--muted);margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+        <strong>Note:</strong> The model uses <strong>80% as the Caution flag</strong> in real-time calculations (matching current ops norms),
+        but operationally treat <strong>75–80% as the hiring consideration trigger</strong> — model utilization tends to understate true load
+        due to unplanned volume, training, and onboarding overhead.
+      </p>
+    </div>
+
+    <!-- Order Volume Thresholds -->
+    <div class="card" style="max-width:640px;margin-bottom:28px">
+      <h3 style="margin-bottom:4px">Order Capacity Flags</h3>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:16px">
+        Applies to the <strong>Orders Capacity %</strong> shown in the Task Breakdown tab.<br>
+        Order Capacity = Order Processing Hours Used ÷ Hours Available for Orders (after fixed ops).
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <thead>
+          <tr style="background:var(--card-bg);border-bottom:2px solid var(--border)">
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600;width:100px">Zone</th>
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600;width:130px">Threshold</th>
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🟢</span> <strong style="color:#2ecc71">OK</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">&lt; 80%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Normal operations. No action needed.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🟡</span> <strong style="color:#f1c40f">Caution</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">80 – 90%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Monitor daily volumes. Identify any tasks that can be deprioritized or automated.</td>
+          </tr>
+          <tr style="background:rgba(231,76,60,0.08)">
+            <td style="padding:10px 12px"><span style="font-size:15px">🔴</span> <strong style="color:#e74c3c">At Risk</strong></td>
+            <td style="padding:10px 12px;font-family:monospace;color:#e2e8f0">&gt; 90%</td>
+            <td style="padding:10px 12px;color:var(--muted)">Escalate. Team cannot sustain current order volume within available time.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Key Definitions -->
+    <div class="card" style="max-width:640px">
+      <h3 style="margin-bottom:16px">Key Definitions</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+        <thead>
+          <tr style="background:var(--card-bg);border-bottom:2px solid var(--border)">
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600;width:200px">Term</th>
+            <th style="text-align:left;padding:9px 12px;color:var(--muted);font-weight:600">Definition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:9px 12px;font-weight:600;color:#e2e8f0">Effective FTE</td>
+            <td style="padding:9px 12px;color:var(--muted)">(Total OAs − 1) + Lead %. Accounts for lead time split between management and order work.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+            <td style="padding:9px 12px;font-weight:600;color:#e2e8f0">Net Hrs/OA</td>
+            <td style="padding:9px 12px;color:var(--muted)">Gross work hours minus lunch, breaks, and meeting time. Represents true productive hours per person per month.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:9px 12px;font-weight:600;color:#e2e8f0">Adj Orders</td>
+            <td style="padding:9px 12px;color:var(--muted)">Weighted daily orders × working days, scaled by the month's seasonal index.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)">
+            <td style="padding:9px 12px;font-weight:600;color:#e2e8f0">Pharma Co Avg</td>
+            <td style="padding:9px 12px;color:var(--muted)">Weighted average number of pharma companies per order by segment (2.04–2.19). Each pharma co = 10 min of processing time.</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:9px 12px;font-weight:600;color:#e2e8f0">Seasonal Index</td>
+            <td style="padding:9px 12px;color:var(--muted)">Monthly multiplier applied to order volume. Feb (1.22) and Mar (1.17) are peak months; Apr–Jun are softer (~0.86–0.89).</td>
+          </tr>
+          <tr style="background:rgba(255,255,255,0.02)">
+            <td style="padding:9px 12px;font-weight:600;color:#e2e8f0">Growth Model Hrs</td>
+            <td style="padding:9px 12px;color:var(--muted)">Incremental hours from net-new accounts: onboarding setup time + recurring order processing for cumulative new accounts each month.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /panel-reference -->
 
 </div><!-- /container -->
 
@@ -2075,55 +2146,6 @@ function renderGrowth() {
   }).join('');
 }
 
-// ── GSheet sync for growth plan ──
-async function syncGrowthFromSheet() {
-  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (!cfg.apiKey) {
-    alert('Please enter your Google API Key first (⚙ GSheet Config button).');
-    return;
-  }
-  // Planning sheet column order (rows 403-409, Monthly Targets tab):
-  // Col B=Beginner(→Momentum), C=Experienced(→Gold), D=Growth, E=Silver, F=Enterprise
-  // Default range covers 5 data rows × 12 months (transposed: rows=segments, cols=months)
-  // Actual layout: each ROW is a segment, each COL is a month (Jan-Dec)
-  // We read 5 rows (one per segment) × 12 cols (one per month)
-  const range = document.getElementById('growthSheetRange').value.trim() || "'Monthly Targets'!B403:M407";
-  const spinner = document.getElementById('growthSyncSpinner');
-  const label = document.getElementById('growthSyncLabel');
-  spinner.classList.remove('hidden'); label.textContent = ' Syncing…';
-
-  try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?key=${cfg.apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-    const data = await res.json();
-    const rows = data.values || [];
-
-    // Planning sheet layout: rows = segments (Beginner/Experienced/Growth/Silver/Enterprise)
-    //                         cols = months (Jan through Dec)
-    // Map rows → dashboard segment names
-    const segMap = ['Momentum','Gold','Growth','Silver','Enterprise']; // Beginner→Momentum, Experienced→Gold
-
-    if (rows.length < 5) throw new Error(`Expected 5 segment rows, got ${rows.length}. Check range: ${range}`);
-
-    // Transpose: populate growthPlan[monthIdx][seg]
-    for (let monthIdx = 0; monthIdx < 12; monthIdx++) {
-      segMap.forEach((seg, rowIdx) => {
-        const val = parseInt((rows[rowIdx] || [])[monthIdx]) || 0;
-        growthPlan[monthIdx][seg] = val;
-      });
-    }
-
-    document.getElementById('growthSyncStatus').textContent = `Synced 12 months × 5 segments · ${new Date().toLocaleTimeString()}`;
-    buildGrowthPlanTable();
-    renderGrowth();
-  } catch(e) {
-    alert(`Growth plan sync failed: ${e.message}\n\nDefault range: 'Monthly Targets'!B403:M407\n(5 segment rows × 12 month columns)`);
-    document.getElementById('growthSyncStatus').textContent = 'Sync failed';
-  } finally {
-    spinner.classList.add('hidden'); label.textContent = '↻ Sync Growth Plan';
-  }
-}
 
 function renderAll(a, model) {
   // Compute growth model first so Overview and KPIs can share the same numbers
@@ -2165,100 +2187,6 @@ function showTab(name, btn) {
   btn.classList.add('active');
 }
 
-// ═══════════════════════════════════════════════════
-//  CONFIG / GSHEET
-// ═══════════════════════════════════════════════════
-function toggleConfig() {
-  const p = document.getElementById('configPanel');
-  p.classList.toggle('open');
-  // Load saved config
-  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (cfg.apiKey) document.getElementById('cfgApiKey').value = cfg.apiKey;
-  if (cfg.orderRange) document.getElementById('cfgOrderRange').value = cfg.orderRange;
-  if (cfg.hcRange) document.getElementById('cfgHCRange').value = cfg.hcRange;
-}
-
-function saveConfig() {
-  const cfg = {
-    apiKey: document.getElementById('cfgApiKey').value.trim(),
-    orderRange: document.getElementById('cfgOrderRange').value.trim() || 'Assumptions!B6',
-    hcRange: document.getElementById('cfgHCRange').value.trim() || 'Assumptions!B13',
-    growthRange: document.getElementById('growthSheetRange').value.trim() || "'Monthly Targets'!B403:M407",
-  };
-  localStorage.setItem('moxieCapConfig', JSON.stringify(cfg));
-  document.getElementById('configPanel').classList.remove('open');
-  document.getElementById('syncStatus').textContent = 'Config saved · Ready to sync';
-}
-
-const SHEET_ID = '1FoMfitLCBZlUCOOgXK3e3GSfET2r7BsryEdcaMKw4Rc'; // Moxie planning GSheet
-async function syncFromGSheet() {
-  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (!cfg.apiKey) {
-    alert('Please enter your Google API Key first (⚙ GSheet Config button).');
-    toggleConfig();
-    return;
-  }
-  const btn = document.getElementById('syncBtn');
-  const label = document.getElementById('syncLabel');
-  const spinner = document.getElementById('syncSpinner');
-  label.textContent = ' Syncing…';
-  spinner.classList.remove('hidden');
-
-  try {
-    // Fetch multiple ranges in one batch request
-    const ranges = [
-      'Assumptions!B2', 'Assumptions!B3', 'Assumptions!B4',  // work hours
-      'Assumptions!B5', 'Assumptions!B7', 'Assumptions!B8', 'Assumptions!B9', // breaks
-      'Assumptions!B12', 'Assumptions!B6',                                       // meetings, gross hrs
-      'Assumptions!B19', 'Assumptions!B20', 'Assumptions!B21',                   // daily orders
-      'Assumptions!B22', 'Assumptions!B23',                                       // pharma
-      'Assumptions!B2:B3', // staffing
-      cfg.hcRange || 'Assumptions!B13',
-    ].map(r => `ranges=${encodeURIComponent(r)}`).join('&');
-
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?${ranges}&key=${cfg.apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`GSheet API error: ${res.status} ${res.statusText}`);
-    const data = await res.json();
-
-    // Helper to get value from batch result
-    const getVal = (idx) => {
-      try { return parseFloat(data.valueRanges[idx]?.values?.[0]?.[0]) || null; } catch { return null; }
-    };
-
-    // Map fetched values to assumption inputs
-    const updates = {
-      a_hoursPerDay:   getVal(0),
-      a_daysPerMonth:  getVal(2),
-      a_weeksPerMonth: getVal(4),
-      a_lunch:         getVal(5),
-      a_break1:        getVal(6),
-      a_break2:        getVal(7),
-      a_meetingHrsWk:  getVal(11),
-      b_monOrders:     getVal(12),
-      b_tueThuOrders:  getVal(13),
-      b_friOrders:     getVal(14),
-      b_pharmaLines:   getVal(15),
-      b_pharmaLineMins:getVal(16),
-      d_totalOAs:      getVal(17),
-    };
-    let updated = 0;
-    Object.entries(updates).forEach(([id, val]) => {
-      if (val !== null) { document.getElementById(id).value = val; updated++; }
-    });
-
-    const now = new Date().toLocaleTimeString();
-    document.getElementById('syncStatus').textContent = `Synced ${updated} values · ${now}`;
-    recalculate();
-  } catch (e) {
-    console.error(e);
-    document.getElementById('syncStatus').textContent = `Sync failed: ${e.message}`;
-    alert(`GSheet sync failed.\n\nError: ${e.message}\n\nTips:\n• Verify your Sheet ID (from the URL: /spreadsheets/d/[ID]/)\n• Verify your API Key is enabled for Sheets API\n• Ensure the sheet is shared (Anyone with the link can view)\n• Check range names match your sheet exactly`);
-  } finally {
-    label.textContent = '↻ Sync GSheet';
-    spinner.classList.add('hidden');
-  }
-}
 
 // ═══════════════════════════════════════════════════
 //  INIT
@@ -2267,10 +2195,6 @@ window.addEventListener('DOMContentLoaded', () => {
   buildGrowthAssumptionsUI();  // build growth assumption inputs before recalc reads them
   buildGrowthPlanTable();       // build the 12×5 editable plan grid
   recalculate();
-  // Load saved config + growth range if exists
-  const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (cfg.sheetId) document.getElementById('syncStatus').textContent = 'GSheet configured · Click to sync';
-  if (cfg.growthRange) document.getElementById('growthSheetRange').value = cfg.growthRange;
 });
 </script>
 <!-- Fixed-position tooltip — repositions above or below based on available viewport space -->
