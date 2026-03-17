@@ -748,8 +748,8 @@
         <div class="assume-row"><div><div class="assume-label">Avg Monday Orders/Day</div></div><input class="assume-input" id="b_monOrders" type="number" value="110" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Avg Tue–Thu Orders/Day</div></div><input class="assume-input" id="b_tueThuOrders" type="number" value="60" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Avg Friday Orders/Day</div></div><input class="assume-input" id="b_friOrders" type="number" value="40" onchange="recalculate()"></div>
-        <div class="assume-row"><div><div class="assume-label">Avg Pharma Lines/Order</div></div><input class="assume-input" id="b_pharmaLines" type="number" value="1.02" step="0.01" onchange="recalculate()"></div>
-        <div class="assume-row"><div><div class="assume-label">Time per Pharma Line (min)</div></div><input class="assume-input" id="b_pharmaLineMins" type="number" value="10" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Avg Pharma Co/Order (aggregate)</div><div class="assume-sublabel">Segment-specific: Ent 2.19 · Gold 2.15 · Silv 2.09 · Mom 2.12 · Grow 2.04</div></div><input class="assume-input" id="b_pharmaLines" type="number" value="2.10" step="0.01" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Time per Pharma Company (min)</div><div class="assume-sublabel">Each additional pharma co in an order adds this many minutes</div></div><input class="assume-input" id="b_pharmaLineMins" type="number" value="10" onchange="recalculate()"></div>
       </div>
 
       <!-- Section C: Account Setup -->
@@ -865,14 +865,21 @@ const PHARMA_LINES_DIST = {
   Momentum:   { total: 171,  '1': {n:29,  pct:17.0}, '2': {n:102,  pct:59.7}, '3': {n:30,  pct:17.5}, '4+': {n:10, pct:5.9}  },
   Growth:     { total: 341,  '1': {n:38,  pct:11.1}, '2': {n:259,  pct:76.0}, '3': {n:37,  pct:10.9}, '4+': {n:7,  pct:2.1}  },
 };
-// Weighted avg pharma lines/order per segment (1×p1 + 2×p2 + 3×p3 + 4×p4+) / total
+// Weighted avg pharma companies/order per segment (1×p1 + 2×p2 + 3×p3 + 4×p4+) / total
+// Each pharma company = 10 min → avg mins/order = PHARMA_AVG_LINES[seg] × pharmaLineMins
 const PHARMA_AVG_LINES = {
-  Enterprise: (1*5 + 2*87 + 3*17 + 4*5)   / 114,   // 2.19
-  Gold:       (1*36 + 2*348 + 3*80 + 4*15) / 479,   // 2.15
-  Silver:     (1*143 + 2*1237 + 3*234 + 4*27) / 1641, // 2.09
-  Momentum:   (1*29 + 2*102 + 3*30 + 4*10) / 171,   // 2.12
-  Growth:     (1*38 + 2*259 + 3*37 + 4*7)  / 341,   // 2.04
+  Enterprise: (1*5  + 2*87  + 3*17  + 4*5)  / 114,  // 2.19 pharma co/order → ~21.9 min avg
+  Gold:       (1*36 + 2*348 + 3*80  + 4*15) / 479,  // 2.15 pharma co/order → ~21.5 min avg
+  Silver:     (1*143+ 2*1237+ 3*234 + 4*27) / 1641, // 2.09 pharma co/order → ~20.9 min avg
+  Momentum:   (1*29 + 2*102 + 3*30  + 4*10) / 171,  // 2.12 pharma co/order → ~21.2 min avg
+  Growth:     (1*38 + 2*259 + 3*37  + 4*7)  / 341,  // 2.04 pharma co/order → ~20.4 min avg
 };
+// Weighted average across all segments (by order volume): 2.10 pharma companies/order
+const PHARMA_WEIGHTED_AVG = Object.entries(PHARMA_LINES_DIST).reduce((acc, [seg, d]) => {
+  const avg = PHARMA_AVG_LINES[seg];
+  return { totalOrders: acc.totalOrders + d.total, weightedSum: acc.weightedSum + avg * d.total };
+}, { totalOrders: 0, weightedSum: 0 });
+const PHARMA_OVERALL_AVG = PHARMA_WEIGHTED_AVG.weightedSum / PHARMA_WEIGHTED_AVG.totalOrders; // ≈ 2.10
 
 // Chart instances registry
 const charts = {};
@@ -1011,7 +1018,7 @@ function calcModel(a) {
     const sm = a.seasonal[monthIdx];
     const adjOrders = baseMonthlyPharmaLines * sm;
     return [
-      { name: 'Order Fulfillment',         hrs: adjOrders * a.pharmaLineMins / 60,      type: 'Variable', vol: Math.round(adjOrders) + ' pharma lines', mins: a.pharmaLineMins },
+      { name: 'Order Fulfillment',         hrs: adjOrders * a.pharmaLineMins / 60,      type: 'Variable', vol: Math.round(adjOrders) + ' pharma co touchpoints', mins: a.pharmaLineMins },
       { name: 'Net New Account Setup',     hrs: netNewPharmaSetupsBase * sm * a.setupMins/60,  type: 'Variable', vol: Math.round(netNewPharmaSetupsBase*sm) + ' setups', mins: a.setupMins },
       { name: 'Migration Account Setup',   hrs: migrationSetupsBase * sm * a.setupMins/60,     type: 'Variable', vol: Math.round(migrationSetupsBase*sm) + ' setups', mins: a.setupMins },
       { name: 'COA / MD / Delink',         hrs: a.coa * sm * a.coaMins/60,             type: 'Variable', vol: Math.round(a.coa*sm) + ' actions', mins: a.coaMins },
@@ -1028,19 +1035,25 @@ function calcModel(a) {
     ];
   };
 
-  // Segment detail per month
+  // Segment detail per month — uses per-segment weighted avg pharma companies/order
   const getSegmentDetail = (monthIdx) => {
     const sm = a.seasonal[monthIdx];
-    const totalOrdHrs = months[monthIdx].orderFulfillHrs;
-    const totalSegBaseOrds = a.segments.reduce((s, seg) => s + seg.providers * seg.avgOrders, 0);
-    return a.segments.map(seg => {
+    // Segment-specific pharma avg: hours = orders × pharmaCompanies/order × mins/pharma ÷ 60
+    const segOrdHrs = a.segments.map(seg => {
+      const baseOrds = seg.providers * seg.avgOrders;
+      const avgPharma = PHARMA_AVG_LINES[seg.name] || a.pharmaLines;
+      return baseOrds * avgPharma * a.pharmaLineMins / 60;
+    });
+    const totalSegBaseOrdHrs = segOrdHrs.reduce((s, h) => s + h, 0);
+    return a.segments.map((seg, idx) => {
       const baseOrds = seg.providers * seg.avgOrders;
       const adjOrds = baseOrds * sm;
-      const ordHrs = adjOrds * a.pharmaLineMins / 60;
-      const pctOfOrdHrs = totalSegBaseOrds > 0 ? baseOrds / totalSegBaseOrds : 0;
+      const avgPharma = PHARMA_AVG_LINES[seg.name] || a.pharmaLines;
+      const ordHrs = adjOrds * avgPharma * a.pharmaLineMins / 60;  // ← segment-specific pharma avg
+      const pctOfOrdHrs = totalSegBaseOrdHrs > 0 ? segOrdHrs[idx] / totalSegBaseOrdHrs : 0;
       const hcReq = netHrsOA > 0 ? ordHrs / netHrsOA : 0;
       const util = totalAvailHrs > 0 ? ordHrs / totalAvailHrs : 0;
-      return { ...seg, baseOrds, adjOrds, ordHrs, pctOfOrdHrs, hcReq, util };
+      return { ...seg, baseOrds, adjOrds, avgPharma, ordHrs, pctOfOrdHrs, hcReq, util };
     });
   };
 
@@ -1237,7 +1250,8 @@ function renderSegments(a, model) {
         label: seg.name,
         data: model.months.map((m, i) => {
           const sm = a.seasonal[i];
-          return (seg.providers * seg.avgOrders * sm * a.pharmaLineMins / 60).toFixed(1);
+          const avgPharma = PHARMA_AVG_LINES[seg.name] || a.pharmaLines;
+          return (seg.providers * seg.avgOrders * avgPharma * sm * a.pharmaLineMins / 60).toFixed(1);
         }),
         backgroundColor: seg.color,
         stack: 'seg'
@@ -1259,7 +1273,8 @@ function renderSegments(a, model) {
         label: seg.name,
         data: model.months.map((m, i) => {
           const sm = a.seasonal[i];
-          const ordHrs = seg.providers * seg.avgOrders * sm * a.pharmaLineMins / 60;
+          const avgPharma = PHARMA_AVG_LINES[seg.name] || a.pharmaLines;
+          const ordHrs = seg.providers * seg.avgOrders * avgPharma * sm * a.pharmaLineMins / 60;
           return (model.netHrsOA > 0 ? ordHrs / model.netHrsOA : 0).toFixed(2);
         }),
         borderColor: seg.color,
@@ -1699,12 +1714,14 @@ function calcGrowthModel(baseModel, ga, a) {
       }
     });
 
-    // Recurring new volume hours: cumulative accounts × avg orders/month × pharmaLines × mins/line × seasonal
+    // Recurring new volume hours: cumulative accounts × avg orders/month × pharmaCompanies/order × mins/pharma ÷ 60 × seasonal
+    // Uses segment-specific weighted avg pharma companies/order from PHARMA_AVG_LINES
     const sm = a.seasonal[i];
     let recurringHrs = 0;
     GROWTH_SEGS.forEach(seg => {
       if (cumulative[seg] > 0) {
-        const ordHrs = cumulative[seg] * ga[seg].newOrdersPerMonth * a.pharmaLines * a.pharmaLineMins / 60 * sm;
+        const avgPharma = PHARMA_AVG_LINES[seg] || a.pharmaLines;
+        const ordHrs = cumulative[seg] * ga[seg].newOrdersPerMonth * avgPharma * a.pharmaLineMins / 60 * sm;
         recurringHrs += ordHrs;
       }
     });
@@ -1723,7 +1740,8 @@ function calcGrowthModel(baseModel, ga, a) {
       return [seg, n > 0 ? (n * pharmaAcctsPerMedspa * setupMins / 60 + n * ga[seg].portalSetupMins / 60) : 0];
     }));
     const segRecurring = Object.fromEntries(GROWTH_SEGS.map(seg => {
-      return [seg, cumulative[seg] > 0 ? (cumulative[seg] * ga[seg].newOrdersPerMonth * a.pharmaLines * a.pharmaLineMins / 60 * sm) : 0];
+      const avgPharma = PHARMA_AVG_LINES[seg] || a.pharmaLines;
+      return [seg, cumulative[seg] > 0 ? (cumulative[seg] * ga[seg].newOrdersPerMonth * avgPharma * a.pharmaLineMins / 60 * sm) : 0];
     }));
     const cumulSnap = { ...cumulative };
 
@@ -2014,7 +2032,7 @@ function renderAll(a, model) {
 function resetAssumptions() {
   const defaults = {
     a_hoursPerDay: 8, a_daysPerMonth: 21.5, a_weeksPerMonth: 4.3, a_lunch: 30, a_break1: 15, a_break2: 15, a_meetingHrsWk: 1,
-    b_monOrders: 110, b_tueThuOrders: 60, b_friOrders: 40, b_pharmaLines: 1.02, b_pharmaLineMins: 10,
+    b_monOrders: 110, b_tueThuOrders: 60, b_friOrders: 40, b_pharmaLines: 2.10, b_pharmaLineMins: 10,
     c_netNew: 100, c_coa: 44, c_migration: 25, c_pharmaAccts: 6.57, c_setupMins: 15, c_coaMins: 15, c_inquiries: 12, c_inquiryMins: 15,
     d_totalOAs: 9, d_leadPct: 0.15,
     f_trackOrders: 65, f_trackMins: 7, f_emailSweeps: 2, f_emailMins: 20, f_shopifySweeps: 1, f_shopifyMins: 20,
