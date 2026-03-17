@@ -142,6 +142,28 @@
     .kpi-row { grid-template-columns: repeat(2, 1fr); }
     .two-col, .three-col { grid-template-columns: 1fr; }
   }
+  /* ── Calculation Tooltips ── */
+  .tip { cursor: help; border-bottom: 1px dashed #b0bec5; position: relative; display: inline-block; }
+  .tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%; transform: translateX(-50%);
+    background: #1e293b; color: #e2e8f0;
+    padding: 9px 13px; border-radius: 7px;
+    font-size: 11.5px; font-weight: 400;
+    white-space: pre; line-height: 1.65;
+    z-index: 9999; min-width: 230px; max-width: 360px;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.12s ease;
+    font-family: 'Consolas', 'Monaco', monospace;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.32);
+    text-align: left;
+  }
+  .tip:hover::after { opacity: 1; }
+  .tip.tip-left::after { left: auto; right: 0; transform: none; }
+  .tip.tip-right::after { left: 0; transform: none; }
+
   @media (max-width: 600px) {
     .kpi-row { grid-template-columns: 1fr 1fr; }
     .kpi-value { font-size: 22px; }
@@ -228,10 +250,6 @@
 <div class="config-panel" id="configPanel">
   <div class="config-grid">
     <div class="config-field">
-      <label>Google Sheet ID</label>
-      <input type="text" id="cfgSheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" />
-    </div>
-    <div class="config-field">
       <label>Google API Key</label>
       <input type="password" id="cfgApiKey" placeholder="AIzaSy..." />
     </div>
@@ -246,7 +264,7 @@
   </div>
   <div class="config-actions">
     <button class="save-config-btn" onclick="saveConfig()">Save Config</button>
-    <span class="config-note">API Key is saved locally in your browser only · Sheets must be shared publicly or with API key access</span>
+    <span class="config-note">API Key is saved locally in your browser only · Sheet ID is pre-configured</span>
   </div>
 </div>
 
@@ -1085,6 +1103,12 @@ function utilFlag(u) {
   if (u >= 0.8) return '<span class="flag flag-warn">🟡 Caution</span>';
   return '<span class="flag flag-ok">🟢 OK</span>';
 }
+// ── Calc Tooltip Helper ──
+// Wraps a display value with a hover tooltip showing the formula that produced it.
+function tip(val, formula, align) {
+  const cls = align === 'left' ? ' tip-left' : align === 'right' ? ' tip-right' : '';
+  return `<span class="tip${cls}" data-tip="${formula.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}">${val}</span>`;
+}
 function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
 // ═══════════════════════════════════════════════════
@@ -1176,17 +1200,29 @@ function renderOverview(a, model) {
   });
 
   // Overview table
+  const weeklyOrds = a.monOrders + a.tueThuOrders * 3 + a.friOrders;
+  const baseMonthlyOrds = weeklyOrds * a.weeksPerMonth;
+  const fte = model.effectiveFTE;
+  const noa = model.netHrsOA;
   const tbody = document.getElementById('overviewTableBody');
   tbody.innerHTML = ms.map((m, i) => `
     <tr>
       <td><strong>${m.label}</strong></td>
-      <td class="num">${m.sm.toFixed(2)}</td>
-      <td class="num">${fmt(m.adjOrders)}</td>
-      <td class="num">${fmt(m.availHrs, 1)}</td>
-      <td class="num">${fmt(m.totalReqHrs, 1)}</td>
-      <td class="num" style="color:${m.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${m.surplus >= 0 ? '+' : ''}${fmt(m.surplus, 1)}</td>
-      <td class="num">${fmtPct(m.util)}</td>
-      <td class="num">${fmt(m.hcRequired, 2)}</td>
+      <td class="num">${tip(m.sm.toFixed(2),
+        `Seasonal index for ${m.month}\nBase = annual average = 1.00\nAdjusts volume up/down each month`)}</td>
+      <td class="num">${tip(fmt(m.adjOrders),
+        `${baseMonthlyOrds.toFixed(0)} base orders/mo  (${weeklyOrds}/wk × ${a.weeksPerMonth} wks)\n× ${a.pharmaLines.toFixed(2)} avg pharma co/order\n× ${m.sm.toFixed(2)} seasonal index\n= ${fmt(m.adjOrders)} pharma touchpoints`)}</td>
+      <td class="num">${tip(fmt(m.availHrs, 1),
+        `(${a.totalOAs} OAs − 1) + ${a.leadPct} lead fraction\n= ${fte.toFixed(2)} effective FTE\n× ${noa.toFixed(1)} net hrs/OA/mo\n  (${a.hoursPerDay}h/day − ${a.lunch}m lunch − ${a.break1+a.break2}m breaks − ${a.meetingHrsWk}h/wk mtgs)\n= ${fmt(m.availHrs,1)} available hrs`)}</td>
+      <td class="num">${tip(fmt(m.totalReqHrs, 1),
+        `Order fulfillment:   ${fmt(m.orderFulfillHrs,1)} hrs\nAccount setup:       ${fmt(m.accountHrs,1)} hrs\nFixed ops overhead:  ${fmt(m.fixedOpsHrs,1)} hrs\n──────────────────────────\nTotal required:      ${fmt(m.totalReqHrs,1)} hrs`)}</td>
+      <td class="num" style="color:${m.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${tip(
+        (m.surplus >= 0 ? '+' : '') + fmt(m.surplus, 1),
+        `${fmt(m.availHrs,1)} avail − ${fmt(m.totalReqHrs,1)} req\n= ${m.surplus >= 0 ? '+' : ''}${fmt(m.surplus,1)} hrs`)}</td>
+      <td class="num">${tip(fmtPct(m.util),
+        `${fmt(m.totalReqHrs,1)} req hrs ÷ ${fmt(m.availHrs,1)} avail hrs\n= ${fmtPct(m.util)}\n\n🟢 OK < 80%  🟡 Caution 80–89%  🔴 At Risk 90%+`)}</td>
+      <td class="num">${tip(fmt(m.hcRequired, 2),
+        `${fmt(m.totalReqHrs,1)} req hrs ÷ ${noa.toFixed(1)} net hrs/OA\n= ${fmt(m.hcRequired,2)} FTEs required\nCurrent: ${a.totalOAs} OAs (${fte.toFixed(2)} eff. FTE)`)}</td>
       <td>${utilFlag(m.util)}</td>
     </tr>
   `).join('');
@@ -1204,17 +1240,25 @@ function renderSegments(a, model) {
   // Segment table
   const tbody = document.getElementById('segmentTableBody');
   const totalOrdHrs = segDetail.reduce((s, sg) => s + sg.ordHrs, 0);
+  const segSm = a.seasonal[idx];
   tbody.innerHTML = segDetail.map(sg => `
     <tr>
       <td><span class="seg-dot" style="background:${sg.color}"></span><strong>${sg.name}</strong></td>
       <td class="num">${fmt(sg.providers)}</td>
-      <td class="num">${sg.avgOrders.toFixed(2)}</td>
-      <td class="num">${fmt(sg.baseOrds, 1)}</td>
-      <td class="num">${a.seasonal[idx].toFixed(2)}</td>
-      <td class="num">${fmt(sg.adjOrds, 1)}</td>
-      <td class="num">${fmt(sg.ordHrs, 1)}</td>
-      <td class="num">${fmtPct(sg.pctOfOrdHrs)}</td>
-      <td class="num">${fmt(sg.hcReq, 2)}</td>
+      <td class="num">${tip(sg.avgOrders.toFixed(2),
+        `Avg monthly orders placed\nper active ${sg.name} provider`)}</td>
+      <td class="num">${tip(fmt(sg.baseOrds, 1),
+        `${sg.providers} providers × ${sg.avgOrders.toFixed(2)} avg orders/mo\n= ${fmt(sg.baseOrds,1)} base monthly orders`)}</td>
+      <td class="num">${tip(segSm.toFixed(2),
+        `Seasonal index for ${monthLabel}\nScales all variable tasks up or down`)}</td>
+      <td class="num">${tip(fmt(sg.adjOrds, 1),
+        `${fmt(sg.baseOrds,1)} base orders × ${segSm.toFixed(2)} seasonal\n= ${fmt(sg.adjOrds,1)} adjusted orders`)}</td>
+      <td class="num">${tip(fmt(sg.ordHrs, 1),
+        `${fmt(sg.adjOrds,1)} adj orders\n× ${sg.avgPharma.toFixed(2)} avg pharma co/order (${sg.name})\n× ${a.pharmaLineMins} min/pharma co ÷ 60\n= ${fmt(sg.ordHrs,1)} hrs`)}</td>
+      <td class="num">${tip(fmtPct(sg.pctOfOrdHrs),
+        `${fmt(sg.ordHrs,1)} ${sg.name} order hrs\n÷ ${fmt(totalOrdHrs,1)} total order hrs\n= ${fmtPct(sg.pctOfOrdHrs)} of order volume`)}</td>
+      <td class="num">${tip(fmt(sg.hcReq, 2),
+        `${fmt(sg.ordHrs,1)} hrs ÷ ${model.netHrsOA.toFixed(1)} net hrs/OA\n= ${fmt(sg.hcReq,2)} FTE for ${sg.name} orders`)}</td>
     </tr>
   `).join('') + `<tr style="font-weight:700; background:#f5f7fa">
     <td>TOTAL</td>
@@ -1384,7 +1428,7 @@ function renderForecast(a, model) {
     const totalEstHrs = estOrderHrs + estFixedHrs + estAcctHrs;
     const surplus = avail - totalEstHrs;
     const util = avail > 0 ? totalEstHrs / avail : 0;
-    return { m, forecastOrders, adjOrders, estReqHrs: totalEstHrs, surplus, util };
+    return { m, forecastOrders, adjOrders, estOrderHrs, estFixedHrs, estAcctHrs, estReqHrs: totalEstHrs, surplus, util };
   });
 
   // Insight
@@ -1401,10 +1445,15 @@ function renderForecast(a, model) {
     <tr>
       <td><strong>${f.m} 2026</strong></td>
       <td class="num">${fmt(f.forecastOrders)}</td>
-      <td class="num">${fmt(f.adjOrders, 0)}</td>
-      <td class="num">${fmt(f.estReqHrs, 1)}</td>
-      <td class="num" style="color:${f.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${f.surplus >= 0 ? '+' : ''}${fmt(f.surplus, 1)}</td>
-      <td class="num">${fmtPct(f.util)}</td>
+      <td class="num">${tip(fmt(f.adjOrders, 0),
+        `${fmt(f.forecastOrders)} forecast orders\n× ${a.pharmaLines.toFixed(2)} avg pharma co/order\n= ${fmt(f.adjOrders)} pharma touchpoints`)}</td>
+      <td class="num">${tip(fmt(f.estReqHrs, 1),
+        `Order fulfillment:   ${fmt(f.estOrderHrs,1)} hrs\nFixed ops overhead:  ${fmt(f.estFixedHrs,1)} hrs\nAccount setup:       ${fmt(f.estAcctHrs,1)} hrs\n──────────────────────────\nTotal:               ${fmt(f.estReqHrs,1)} hrs`)}</td>
+      <td class="num" style="color:${f.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${tip(
+        (f.surplus >= 0 ? '+' : '') + fmt(f.surplus, 1),
+        `${fmt(avail,1)} avail − ${fmt(f.estReqHrs,1)} req\n= ${f.surplus >= 0 ? '+' : ''}${fmt(f.surplus,1)} hrs`)}</td>
+      <td class="num">${tip(fmtPct(f.util),
+        `${fmt(f.estReqHrs,1)} req hrs ÷ ${fmt(avail,1)} avail hrs\n= ${fmtPct(f.util)}`)}</td>
       <td>${utilFlag(f.util)}</td>
     </tr>
   `).join('');
@@ -1970,29 +2019,40 @@ function renderGrowth() {
 
   // ── Detail table ──
   const tbody = document.getElementById('growthDetailBody');
-  tbody.innerHTML = gm.map(mo => `
+  tbody.innerHTML = gm.map((mo, i) => {
+    const sm = a.seasonal[i];
+    return `
     <tr style="${mo.util >= 0.9 ? 'background:#fdecea' : mo.util >= 0.8 ? 'background:#fff8e6' : ''}">
       <td><strong>${mo.label}</strong></td>
       <td class="num">${mo.totalNew > 0 ? '<strong>+' + mo.totalNew + '</strong>' : '—'}</td>
-      <td class="num">${mo.onboardHrs > 0 ? fmt(mo.onboardHrs, 1) : '—'}</td>
-      <td class="num">${fmt(mo.recurringHrs, 1)}</td>
-      <td class="num"><strong>${fmt(mo.totalGrowthHrs, 1)}</strong></td>
-      <td class="num">${fmt(mo.baseReqHrs, 1)}</td>
-      <td class="num"><strong>${fmt(mo.totalReqHrs, 1)}</strong></td>
+      <td class="num">${mo.onboardHrs > 0 ? tip(fmt(mo.onboardHrs, 1),
+        `${mo.totalNew} new accounts × pharma co setup (15 min each)\n+ portal setup per account\n= ${fmt(mo.onboardHrs,1)} onboarding hrs`) : '—'}</td>
+      <td class="num">${tip(fmt(mo.recurringHrs, 1),
+        `${mo.totalCumulative} cumulative new accts\n× avg orders/mo per segment\n× avg pharma co/order per segment\n× ${a.pharmaLineMins} min/pharma co ÷ 60\n× ${sm.toFixed(2)} seasonal index\n= ${fmt(mo.recurringHrs,1)} recurring hrs`)}</td>
+      <td class="num"><strong>${tip(fmt(mo.totalGrowthHrs, 1),
+        `${fmt(mo.onboardHrs,1)} onboarding hrs\n+ ${fmt(mo.recurringHrs,1)} recurring order hrs\n= ${fmt(mo.totalGrowthHrs,1)} incremental hrs from growth`)}</strong></td>
+      <td class="num">${tip(fmt(mo.baseReqHrs, 1),
+        `Required hours from base model\n(existing accounts, fixed ops, account setup)\nexcluding growth plan new accounts`)}</td>
+      <td class="num"><strong>${tip(fmt(mo.totalReqHrs, 1),
+        `${fmt(mo.baseReqHrs,1)} base + ${fmt(mo.totalGrowthHrs,1)} growth\n= ${fmt(mo.totalReqHrs,1)} total required hrs`)}</strong></td>
       <td class="num">${fmt(mo.avail, 1)}</td>
-      <td class="num" style="color:${mo.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${mo.surplus >= 0 ? '+' : ''}${fmt(mo.surplus, 1)}</td>
-      <td class="num"><strong>${fmtPct(mo.util)}</strong></td>
-      <td class="num" style="color:var(--muted)">${fmtPct(mo.baseUtil)}</td>
+      <td class="num" style="color:${mo.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${tip(
+        (mo.surplus >= 0 ? '+' : '') + fmt(mo.surplus, 1),
+        `${fmt(mo.avail,1)} avail − ${fmt(mo.totalReqHrs,1)} req\n= ${mo.surplus >= 0 ? '+' : ''}${fmt(mo.surplus,1)} hrs`)}</td>
+      <td class="num"><strong>${tip(fmtPct(mo.util),
+        `${fmt(mo.totalReqHrs,1)} req ÷ ${fmt(mo.avail,1)} avail\n= ${fmtPct(mo.util)}\n\nIncludes growth plan new account volume`)}</strong></td>
+      <td class="num" style="color:var(--muted)">${tip(fmtPct(mo.baseUtil),
+        `Base utilization without growth plan\n${fmt(mo.baseReqHrs,1)} req ÷ ${fmt(mo.avail,1)} avail\n= ${fmtPct(mo.baseUtil)}`)}</td>
       <td>${utilFlag(mo.util)}</td>
-    </tr>
-  `).join('');
+    </tr>`;
+  }).join('');
 }
 
 // ── GSheet sync for growth plan ──
 async function syncGrowthFromSheet() {
   const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (!cfg.sheetId || !cfg.apiKey) {
-    alert('Please configure your Google Sheet ID and API Key first (⚙ GSheet Config button).');
+  if (!cfg.apiKey) {
+    alert('Please enter your Google API Key first (⚙ GSheet Config button).');
     return;
   }
   // Planning sheet column order (rows 403-409, Monthly Targets tab):
@@ -2006,7 +2066,7 @@ async function syncGrowthFromSheet() {
   spinner.classList.remove('hidden'); label.textContent = ' Syncing…';
 
   try {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values/${encodeURIComponent(range)}?key=${cfg.apiKey}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?key=${cfg.apiKey}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     const data = await res.json();
@@ -2083,7 +2143,6 @@ function toggleConfig() {
   p.classList.toggle('open');
   // Load saved config
   const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (cfg.sheetId) document.getElementById('cfgSheetId').value = cfg.sheetId;
   if (cfg.apiKey) document.getElementById('cfgApiKey').value = cfg.apiKey;
   if (cfg.orderRange) document.getElementById('cfgOrderRange').value = cfg.orderRange;
   if (cfg.hcRange) document.getElementById('cfgHCRange').value = cfg.hcRange;
@@ -2091,7 +2150,6 @@ function toggleConfig() {
 
 function saveConfig() {
   const cfg = {
-    sheetId: document.getElementById('cfgSheetId').value.trim(),
     apiKey: document.getElementById('cfgApiKey').value.trim(),
     orderRange: document.getElementById('cfgOrderRange').value.trim() || 'Assumptions!B6',
     hcRange: document.getElementById('cfgHCRange').value.trim() || 'Assumptions!B13',
@@ -2102,10 +2160,11 @@ function saveConfig() {
   document.getElementById('syncStatus').textContent = 'Config saved · Ready to sync';
 }
 
+const SHEET_ID = '1FoMfitLCBZlUCOOgXK3e3GSfET2r7BsryEdcaMKw4Rc'; // Moxie planning GSheet
 async function syncFromGSheet() {
   const cfg = JSON.parse(localStorage.getItem('moxieCapConfig') || '{}');
-  if (!cfg.sheetId || !cfg.apiKey) {
-    alert('Please configure your Google Sheet ID and API Key first (⚙ GSheet Config button).');
+  if (!cfg.apiKey) {
+    alert('Please enter your Google API Key first (⚙ GSheet Config button).');
     toggleConfig();
     return;
   }
@@ -2127,7 +2186,7 @@ async function syncFromGSheet() {
       cfg.hcRange || 'Assumptions!B13',
     ].map(r => `ranges=${encodeURIComponent(r)}`).join('&');
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${cfg.sheetId}/values:batchGet?${ranges}&key=${cfg.apiKey}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values:batchGet?${ranges}&key=${cfg.apiKey}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`GSheet API error: ${res.status} ${res.statusText}`);
     const data = await res.json();
