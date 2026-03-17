@@ -143,26 +143,21 @@
     .two-col, .three-col { grid-template-columns: 1fr; }
   }
   /* ── Calculation Tooltips ── */
-  .tip { cursor: help; border-bottom: 1px dashed #b0bec5; position: relative; display: inline-block; }
-  .tip::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%; transform: translateX(-50%);
+  .tip { cursor: help; border-bottom: 1px dashed #b0bec5; display: inline-block; }
+  #calcTooltip {
+    position: fixed;
     background: #1e293b; color: #e2e8f0;
     padding: 9px 13px; border-radius: 7px;
     font-size: 11.5px; font-weight: 400;
     white-space: pre; line-height: 1.65;
-    z-index: 9999; min-width: 230px; max-width: 360px;
-    pointer-events: none; opacity: 0;
-    transition: opacity 0.12s ease;
+    z-index: 99999;
+    min-width: 230px; max-width: 360px;
+    pointer-events: none;
     font-family: 'Consolas', 'Monaco', monospace;
     box-shadow: 0 4px 16px rgba(0,0,0,0.32);
+    display: none;
     text-align: left;
   }
-  .tip:hover::after { opacity: 1; }
-  .tip.tip-left::after { left: auto; right: 0; transform: none; }
-  .tip.tip-right::after { left: 0; transform: none; }
 
   @media (max-width: 600px) {
     .kpi-row { grid-template-columns: 1fr 1fr; }
@@ -2242,6 +2237,72 @@ window.addEventListener('DOMContentLoaded', () => {
   if (cfg.sheetId) document.getElementById('syncStatus').textContent = 'GSheet configured · Click to sync';
   if (cfg.growthRange) document.getElementById('growthSheetRange').value = cfg.growthRange;
 });
+</script>
+<!-- Fixed-position tooltip — repositions above or below based on available viewport space -->
+<div id="calcTooltip"></div>
+<script>
+(function() {
+  const tt = document.getElementById('calcTooltip');
+  let activeEl = null;
+
+  function show(el) {
+    const text = el.getAttribute('data-tip');
+    if (!text) return;
+    tt.textContent = text;
+    tt.style.display = 'block';
+    position(el);
+    activeEl = el;
+  }
+
+  function hide() {
+    tt.style.display = 'none';
+    activeEl = null;
+  }
+
+  function position(el) {
+    const rect = el.getBoundingClientRect();
+    const ttW = tt.offsetWidth  || 260;
+    const ttH = tt.offsetHeight || 120;
+    const vw  = window.innerWidth;
+    const vh  = window.innerHeight;
+    const GAP = 8;
+
+    // Vertical: show above if there's room, otherwise show below
+    let top;
+    if (rect.top - GAP - ttH >= 0) {
+      top = rect.top - ttH - GAP;        // above element
+    } else {
+      top = rect.bottom + GAP;            // below element
+    }
+
+    // Horizontal: center on element, then clamp to viewport with 8px margin
+    let left = rect.left + rect.width / 2 - ttW / 2;
+    left = Math.max(8, Math.min(left, vw - ttW - 8));
+
+    // Also clamp top to viewport
+    top = Math.max(8, Math.min(top, vh - ttH - 8));
+
+    tt.style.top  = top  + 'px';
+    tt.style.left = left + 'px';
+  }
+
+  // Event delegation — works on dynamically rendered table rows
+  document.addEventListener('mouseover', function(e) {
+    const el = e.target.closest('.tip');
+    if (el && el !== activeEl) show(el);
+    else if (!el) hide();
+  });
+
+  document.addEventListener('mouseout', function(e) {
+    // Only hide if we're leaving a .tip and not entering another
+    if (e.target.closest('.tip') && !e.relatedTarget?.closest('.tip')) hide();
+  });
+
+  // Reposition on scroll so tooltip tracks the element
+  document.addEventListener('scroll', function() {
+    if (activeEl) position(activeEl);
+  }, true);
+})();
 </script>
 </body>
 </html>
