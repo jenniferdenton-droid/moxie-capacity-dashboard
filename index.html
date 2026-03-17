@@ -381,16 +381,19 @@
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Monthly Capacity Summary</div>
+      <div class="card-title">Monthly Capacity Summary <span style="font-size:11px;font-weight:400;color:var(--accent);background:#e0f2fe;padding:2px 8px;border-radius:10px;margin-left:6px">Includes growth plan new accounts</span></div>
       <div style="overflow-x:auto">
         <table>
           <thead>
             <tr>
               <th>Month</th>
-              <th class="num">Seasonal Mult</th>
+              <th class="num">Seasonal</th>
               <th class="num">Adj Orders</th>
+              <th class="num">New Accts</th>
               <th class="num">Available Hrs</th>
-              <th class="num">Required Hrs</th>
+              <th class="num">Base Req Hrs</th>
+              <th class="num">Growth + Hrs</th>
+              <th class="num">Total Req Hrs</th>
               <th class="num">Surplus / (Deficit)</th>
               <th class="num">Utilization</th>
               <th class="num">HC Required</th>
@@ -1114,22 +1117,34 @@ function updateKPIs() {
   const model = calcModel(a);
   const idx = parseInt(document.getElementById('monthSelect').value);
   const m = model.months[idx];
-  const [badgeText, badgeClass] = utilBadge(m.util);
 
-  document.getElementById('kvUtil').textContent = fmtPct(m.util);
+  // Use growth-adjusted numbers so KPI cards match Overview and Growth Model tabs
+  const ga = getGrowthAssumptions();
+  const gm = calcGrowthModel(model, ga, a);
+  const mo = gm[idx];                          // growth-model month for selected month
+  const totalReq = mo.totalReqHrs;
+  const surplus  = mo.surplus;
+  const util     = mo.util;
+  const hcReq    = model.netHrsOA > 0 ? totalReq / model.netHrsOA : 0;
+
+  const [badgeText] = utilBadge(util);
+
+  document.getElementById('kvUtil').textContent = fmtPct(util);
   document.getElementById('kbUtil').textContent = badgeText;
-  document.getElementById('kbUtil').className = 'kpi-badge ' + (m.util >= 0.9 ? 'badge-red' : m.util >= 0.8 ? 'badge-yellow' : 'badge-green');
+  document.getElementById('kbUtil').className = 'kpi-badge ' + (util >= 0.9 ? 'badge-red' : util >= 0.8 ? 'badge-yellow' : 'badge-green');
 
   document.getElementById('kvAvail').textContent = fmt(m.availHrs, 1);
-  document.getElementById('ksAvail').textContent = fmt(a.effectiveFTE || model.effectiveFTE, 2) + ' effective FTEs × ' + fmt(model.netHrsOA, 1) + ' net hrs/OA';
+  document.getElementById('ksAvail').textContent = fmt(model.effectiveFTE, 2) + ' eff. FTEs × ' + fmt(model.netHrsOA, 1) + ' net hrs/OA';
 
-  document.getElementById('kvReq').textContent = fmt(m.totalReqHrs, 1);
-  document.getElementById('ksReq').textContent = 'Order: ' + fmt(m.orderFulfillHrs, 1) + ' · Acct: ' + fmt(m.accountHrs, 1) + ' · Ops: ' + fmt(m.fixedOpsHrs, 1);
+  document.getElementById('kvReq').textContent = fmt(totalReq, 1);
+  document.getElementById('ksReq').textContent =
+    'Base: ' + fmt(mo.baseReqHrs, 1) + ' · Growth: +' + fmt(mo.totalGrowthHrs, 1) +
+    (mo.totalNew > 0 ? ' (' + mo.totalNew + ' new accts)' : '');
 
-  document.getElementById('kvSurp').textContent = (m.surplus >= 0 ? '+' : '') + fmt(m.surplus, 1);
-  document.getElementById('ksHC').textContent = fmt(m.hcRequired, 2) + ' FTEs';
+  document.getElementById('kvSurp').textContent = (surplus >= 0 ? '+' : '') + fmt(surplus, 1);
+  document.getElementById('ksHC').textContent = fmt(hcReq, 2) + ' FTEs';
   document.getElementById('kbSurp').textContent = badgeText;
-  document.getElementById('kbSurp').className = 'kpi-badge ' + (m.surplus < 0 ? 'badge-red' : m.surplus < 100 ? 'badge-yellow' : 'badge-green');
+  document.getElementById('kbSurp').className = 'kpi-badge ' + (surplus < 0 ? 'badge-red' : surplus < 100 ? 'badge-yellow' : 'badge-green');
 
   // ── Driver flag bar ──
   // Top task: find highest hour task for this month
@@ -1155,7 +1170,7 @@ function updateKPIs() {
 // ═══════════════════════════════════════════════════
 //  OVERVIEW CHARTS
 // ═══════════════════════════════════════════════════
-function renderOverview(a, model) {
+function renderOverview(a, model, gm) {
   const ms = model.months;
   const avail = ms.map(m => m.availHrs);
   const req = ms.map(m => m.totalReqHrs);
@@ -1194,33 +1209,50 @@ function renderOverview(a, model) {
       scales: { y: { title: { display: true, text: '%' }, min: 40, max: 110, grid: { color: '#f0f0f0' } } } }
   });
 
-  // Overview table
+  // Overview table — uses growth-adjusted totals so numbers match the Growth Model tab
   const weeklyOrds = a.monOrders + a.tueThuOrders * 3 + a.friOrders;
   const baseMonthlyOrds = weeklyOrds * a.weeksPerMonth;
   const fte = model.effectiveFTE;
   const noa = model.netHrsOA;
   const tbody = document.getElementById('overviewTableBody');
-  tbody.innerHTML = ms.map((m, i) => `
-    <tr>
+  tbody.innerHTML = ms.map((m, i) => {
+    const mo = gm && gm[i] ? gm[i] : null;             // growth-model month
+    const totalReq  = mo ? mo.totalReqHrs   : m.totalReqHrs;
+    const surplus   = mo ? mo.surplus        : m.surplus;
+    const util      = mo ? mo.util           : m.util;
+    const growthHrs = mo ? mo.totalGrowthHrs : 0;
+    const newAccts  = mo ? mo.totalNew       : 0;
+    const hcReq     = noa > 0 ? totalReq / noa : 0;
+
+    return `
+    <tr style="${util >= 0.9 ? 'background:#fdecea' : util >= 0.8 ? 'background:#fff8e6' : ''}">
       <td><strong>${m.label}</strong></td>
       <td class="num">${tip(m.sm.toFixed(2),
-        `Seasonal index for ${m.month}\nBase = annual average = 1.00\nAdjusts volume up/down each month`)}</td>
+        `Seasonal index for ${m.month}\nBase = annual average = 1.00\nAdjusts all variable tasks up or down`)}</td>
       <td class="num">${tip(fmt(m.adjOrders),
-        `${baseMonthlyOrds.toFixed(0)} base orders/mo  (${weeklyOrds}/wk × ${a.weeksPerMonth} wks)\n× ${a.pharmaLines.toFixed(2)} avg pharma co/order\n× ${m.sm.toFixed(2)} seasonal index\n= ${fmt(m.adjOrders)} pharma touchpoints`)}</td>
+        `${baseMonthlyOrds.toFixed(0)} base orders/mo  (${weeklyOrds}/wk × ${a.weeksPerMonth} wks)\n× ${a.pharmaLines.toFixed(2)} avg pharma co/order\n× ${m.sm.toFixed(2)} seasonal index\n= ${fmt(m.adjOrders)} existing-account pharma touchpoints`)}</td>
+      <td class="num" style="color:${newAccts > 0 ? 'var(--accent)' : 'var(--muted)'}">
+        ${newAccts > 0 ? tip('<strong>+' + newAccts + '</strong>',
+          `${newAccts} new accounts launching in ${m.month}\nSee Growth Model tab for segment breakdown`) : '—'}</td>
       <td class="num">${tip(fmt(m.availHrs, 1),
         `(${a.totalOAs} OAs − 1) + ${a.leadPct} lead fraction\n= ${fte.toFixed(2)} effective FTE\n× ${noa.toFixed(1)} net hrs/OA/mo\n  (${a.hoursPerDay}h/day − ${a.lunch}m lunch − ${a.break1+a.break2}m breaks − ${a.meetingHrsWk}h/wk mtgs)\n= ${fmt(m.availHrs,1)} available hrs`)}</td>
       <td class="num">${tip(fmt(m.totalReqHrs, 1),
-        `Order fulfillment:   ${fmt(m.orderFulfillHrs,1)} hrs\nAccount setup:       ${fmt(m.accountHrs,1)} hrs\nFixed ops overhead:  ${fmt(m.fixedOpsHrs,1)} hrs\n──────────────────────────\nTotal required:      ${fmt(m.totalReqHrs,1)} hrs`)}</td>
-      <td class="num" style="color:${m.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${tip(
-        (m.surplus >= 0 ? '+' : '') + fmt(m.surplus, 1),
-        `${fmt(m.availHrs,1)} avail − ${fmt(m.totalReqHrs,1)} req\n= ${m.surplus >= 0 ? '+' : ''}${fmt(m.surplus,1)} hrs`)}</td>
-      <td class="num">${tip(fmtPct(m.util),
-        `${fmt(m.totalReqHrs,1)} req hrs ÷ ${fmt(m.availHrs,1)} avail hrs\n= ${fmtPct(m.util)}\n\n🟢 OK < 80%  🟡 Caution 80–89%  🔴 At Risk 90%+`)}</td>
-      <td class="num">${tip(fmt(m.hcRequired, 2),
-        `${fmt(m.totalReqHrs,1)} req hrs ÷ ${noa.toFixed(1)} net hrs/OA\n= ${fmt(m.hcRequired,2)} FTEs required\nCurrent: ${a.totalOAs} OAs (${fte.toFixed(2)} eff. FTE)`)}</td>
-      <td>${utilFlag(m.util)}</td>
-    </tr>
-  `).join('');
+        `Order fulfillment:   ${fmt(m.orderFulfillHrs,1)} hrs\nAccount setup:       ${fmt(m.accountHrs,1)} hrs\nFixed ops overhead:  ${fmt(m.fixedOpsHrs,1)} hrs\n──────────────────────\nBase total:          ${fmt(m.totalReqHrs,1)} hrs\n(existing accounts only — excl. growth)`)}</td>
+      <td class="num" style="color:${growthHrs > 0 ? 'var(--accent)' : 'var(--muted)'}">
+        ${growthHrs > 0 ? tip('+' + fmt(growthHrs, 1),
+          `Onboarding:  ${fmt(mo.onboardHrs,1)} hrs  (new pharma setup + portal)\nRecurring:   ${fmt(mo.recurringHrs,1)} hrs  (new acct order volume)\n────────────────────────\nGrowth total: +${fmt(growthHrs,1)} hrs\n(${newAccts} new accounts launching this month)`) : '—'}</td>
+      <td class="num"><strong>${tip(fmt(totalReq, 1),
+        `${fmt(m.totalReqHrs,1)} base + ${fmt(growthHrs,1)} growth\n= ${fmt(totalReq,1)} total required hrs\n\nMatches Growth Model tab total`)}</strong></td>
+      <td class="num" style="color:${surplus < 0 ? '#e74c3c' : '#2ecc71'}">${tip(
+        (surplus >= 0 ? '+' : '') + fmt(surplus, 1),
+        `${fmt(m.availHrs,1)} avail − ${fmt(totalReq,1)} total req\n= ${surplus >= 0 ? '+' : ''}${fmt(surplus,1)} hrs`)}</td>
+      <td class="num">${tip(fmtPct(util),
+        `${fmt(totalReq,1)} total req ÷ ${fmt(m.availHrs,1)} avail\n= ${fmtPct(util)}\n(base only: ${fmtPct(m.util)})\n\n🟢 OK < 80%  🟡 Caution 80–89%  🔴 At Risk 90%+`)}</td>
+      <td class="num">${tip(fmt(hcReq, 2),
+        `${fmt(totalReq,1)} total req hrs ÷ ${noa.toFixed(1)} net hrs/OA\n= ${fmt(hcReq,2)} FTEs required\nCurrent: ${a.totalOAs} OAs (${fte.toFixed(2)} eff. FTE)`)}</td>
+      <td>${utilFlag(util)}</td>
+    </tr>`;
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════
@@ -2094,14 +2126,17 @@ async function syncGrowthFromSheet() {
 }
 
 function renderAll(a, model) {
-  renderOverview(a, model);
+  // Compute growth model first so Overview and KPIs can share the same numbers
+  const ga = getGrowthAssumptions();
+  const gm = calcGrowthModel(model, ga, a);
+  renderOverview(a, model, gm);
   renderSegments(a, model);
   renderTasks(a, model);
   renderForecast(a, model);
   renderSpend(a);
   renderPharmaLines();
   renderSectionF(a);
-  renderGrowth();
+  renderGrowth();   // renders its own growth charts/plan table separately
 }
 
 function resetAssumptions() {
