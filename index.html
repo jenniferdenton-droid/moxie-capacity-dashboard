@@ -102,7 +102,20 @@
   .seg-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
 
   /* ── ASSUMPTIONS ── */
-  .assumptions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .assumptions-wrap { display: flex; gap: 20px; align-items: flex-start; }
+  .assumptions-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .changelog-panel { width: 280px; flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; position: sticky; top: 80px; max-height: calc(100vh - 120px); overflow-y: auto; }
+  .changelog-panel h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent2); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .changelog-entry { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .changelog-entry:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .changelog-date { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .changelog-change { font-size: 11.5px; color: var(--muted); margin-bottom: 3px; line-height: 1.5; }
+  .changelog-change strong { color: var(--primary); }
+  .changelog-change .from-val { color: #e74c3c; text-decoration: line-through; }
+  .changelog-change .to-val { color: #2ecc71; font-weight: 700; }
+  .changelog-empty { font-size: 12px; color: var(--muted); font-style: italic; text-align: center; padding: 20px 0; }
+  .clear-log-btn { font-size: 10px; padding: 2px 7px; background: transparent; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); cursor: pointer; }
+  .clear-log-btn:hover { border-color: #e74c3c; color: #e74c3c; }
   .assume-section { background: var(--card); border-radius: 10px; border: 1px solid var(--border); padding: 18px 20px; }
   .assume-section h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; color: var(--accent2); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
   .assume-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 12px; }
@@ -698,6 +711,7 @@
       <button class="reset-btn" onclick="resetAssumptions()">↺ Reset to Defaults</button>
       <span style="font-size:12px;color:var(--muted)">Yellow fields are editable inputs · All calculations update in real time</span>
     </div>
+    <div class="assumptions-wrap">
     <div class="assumptions-grid">
 
       <!-- Section A: Work Hours -->
@@ -799,6 +813,14 @@
       </div>
 
     </div><!-- /assumptions-grid -->
+
+    <!-- Changelog sidebar -->
+    <div class="changelog-panel">
+      <h3>📝 Change Log <button class="clear-log-btn" onclick="clearChangeLog()">Clear</button></h3>
+      <div id="changelogBody"><div class="changelog-empty">No changes saved yet.<br>Update an assumption and recalculate to track it.</div></div>
+    </div>
+
+    </div><!-- /assumptions-wrap -->
   </div><!-- /panel-assumptions -->
 
   <!-- ═══ REFERENCE TAB ═══ -->
@@ -1570,19 +1592,17 @@ function renderTasks(a, model) {
 //  FORECAST CHARTS
 // ═══════════════════════════════════════════════════
 function renderForecast(a, model) {
-  const pharmaLinesBase = (a.monOrders + a.tueThuOrders*3 + a.friOrders) * a.weeksPerMonth * a.pharmaLines;
-  const avail = model.months[0].availHrs;
-
   const fcastData = MONTHS.map((m, i) => {
+    const avail        = model.months[i].availHrs;   // per-month available hours
     const forecastOrders = FORECAST_ORDERS[i];
-    const adjOrders = forecastOrders * a.pharmaLines;
-    const estOrderHrs = adjOrders * a.pharmaLineMins / 60;
-    const estFixedHrs = model.months[i].fixedOpsHrs;
-    const estAcctHrs = model.months[i].accountHrs;
-    const totalEstHrs = estOrderHrs + estFixedHrs + estAcctHrs;
-    const surplus = avail - totalEstHrs;
-    const util = avail > 0 ? totalEstHrs / avail : 0;
-    return { m, forecastOrders, adjOrders, estOrderHrs, estFixedHrs, estAcctHrs, estReqHrs: totalEstHrs, surplus, util };
+    const adjOrders    = forecastOrders * a.pharmaLines;
+    const estOrderHrs  = adjOrders * a.pharmaLineMins / 60;
+    const estFixedHrs  = model.months[i].fixedOpsHrs;
+    const estAcctHrs   = model.months[i].accountHrs;
+    const totalEstHrs  = estOrderHrs + estFixedHrs + estAcctHrs;
+    const surplus      = avail - totalEstHrs;
+    const util         = avail > 0 ? totalEstHrs / avail : 0;
+    return { m, avail, forecastOrders, adjOrders, estOrderHrs, estFixedHrs, estAcctHrs, estReqHrs: totalEstHrs, surplus, util };
   });
 
   // Insight
@@ -1605,9 +1625,9 @@ function renderForecast(a, model) {
         `Order fulfillment:   ${fmt(f.estOrderHrs,1)} hrs\nFixed ops overhead:  ${fmt(f.estFixedHrs,1)} hrs\nAccount setup:       ${fmt(f.estAcctHrs,1)} hrs\n──────────────────────────\nTotal:               ${fmt(f.estReqHrs,1)} hrs`)}</td>
       <td class="num" style="color:${f.surplus < 0 ? '#e74c3c' : '#2ecc71'}">${tip(
         (f.surplus >= 0 ? '+' : '') + fmt(f.surplus, 1),
-        `${fmt(avail,1)} avail − ${fmt(f.estReqHrs,1)} req\n= ${f.surplus >= 0 ? '+' : ''}${fmt(f.surplus,1)} hrs`)}</td>
+        `${fmt(f.avail,1)} avail − ${fmt(f.estReqHrs,1)} req\n= ${f.surplus >= 0 ? '+' : ''}${fmt(f.surplus,1)} hrs`)}</td>
       <td class="num">${tip(fmtPct(f.util),
-        `${fmt(f.estReqHrs,1)} req hrs ÷ ${fmt(avail,1)} avail hrs\n= ${fmtPct(f.util)}`)}</td>
+        `${fmt(f.estReqHrs,1)} req hrs ÷ ${fmt(f.avail,1)} avail hrs\n= ${fmtPct(f.util)}`)}</td>
       <td>${utilFlag(f.util)}</td>
     </tr>
   `).join('');
@@ -1616,9 +1636,10 @@ function renderForecast(a, model) {
   // "Order headroom" = hours remaining after fixed ops + account tasks, converted back to max orders
   destroyChart('chartForecast');
   const orderHeadroom = MONTHS.map((m, i) => {
-    const nonOrderHrs = model.months[i].fixedOpsHrs + model.months[i].accountHrs;
-    const hrsLeftForOrders = avail - nonOrderHrs;  // hours available after all non-order work
-    const maxOrders = hrsLeftForOrders / (a.pharmaLines * a.pharmaLineMins / 60); // convert to orders
+    const monthAvail   = model.months[i].availHrs;                                  // per-month available hours
+    const nonOrderHrs  = model.months[i].fixedOpsHrs + model.months[i].accountHrs; // all non-order task hrs
+    const hrsLeftForOrders = monthAvail - nonOrderHrs;
+    const maxOrders = hrsLeftForOrders / (a.pharmaLines * a.pharmaLineMins / 60);
     return Math.max(0, Math.round(maxOrders));
   });
   charts['chartForecast'] = new Chart(document.getElementById('chartForecast'), {
@@ -1663,6 +1684,7 @@ function renderForecast(a, model) {
 function recalculate() {
   const a = getAssumptions();
   const model = calcModel(a);
+  saveAndTrackAssumptions();   // persist + log any changes before rendering
   updateKPIs();
   const activeTab = document.querySelector('.panel.active').id.replace('panel-', '');
   renderAll(a, model);
@@ -2245,12 +2267,124 @@ function showTab(name, btn) {
 
 
 // ═══════════════════════════════════════════════════
+//  ASSUMPTION PERSISTENCE + CHANGE LOG
+// ═══════════════════════════════════════════════════
+
+// Human-readable labels for every assumption field ID
+const ASSUME_LABELS = {
+  a_hoursPerDay:'Work Hrs/OA/Day', a_daysPerMonth:'Working Days/Month', a_weeksPerMonth:'Weeks/Month',
+  a_lunch:'Lunch Break (min)', a_break1:'Break 1 (min)', a_break2:'Break 2 (min)', a_meetingHrsWk:'Meeting Hrs/Week',
+  b_monOrders:'Monday Orders/Day', b_tueThuOrders:'Tue–Thu Orders/Day', b_friOrders:'Friday Orders/Day',
+  b_pharmaLines:'Avg Pharma Co/Order', b_pharmaLineMins:'Mins per Pharma Co',
+  c_netNew:'Net New Accounts', c_coa:'COA Accounts', c_migration:'Migration Accounts',
+  c_pharmaAccts:'Avg Pharma Accts/Provider', c_setupMins:'Account Setup (min)',
+  c_coaMins:'COA Setup (min)', c_inquiries:'Inquiries/Month', c_inquiryMins:'Inquiry Time (min)',
+  d_totalOAs:'Total OAs (headcount)', d_leadPct:'Lead Time Split %',
+  f_trackOrders:'Order Tracking Orders/Day', f_trackMins:'Order Tracking (min)',
+  f_emailSweeps:'Email Sweeps/Day', f_emailMins:'Email Sweep (min)',
+  f_shopifySweeps:'Shopify Sweeps/Day', f_shopifyMins:'Shopify Sweep (min)',
+  f_handoffOAs:'Handoff OAs', f_handoffMins:'Handoff (min)',
+  f_merzRuns:'Merz Runs/Month', f_merzMins:'Merz Run (min)',
+  f_portalChecks:'Portal Checks/Day', f_portalMins:'Portal Check (min)',
+  f_reconMonth:'Recon/Month', f_reconMins:'Recon (min)',
+  f_priceIssues:'Price Issues/Month', f_priceMins:'Price Issue (min)',
+  f_sopUpdates:'SOP Updates/Month', f_sopMins:'SOP Update (min)',
+  s_jan:'Seasonal — Jan', s_feb:'Seasonal — Feb', s_mar:'Seasonal — Mar', s_apr:'Seasonal — Apr',
+  s_may:'Seasonal — May', s_jun:'Seasonal — Jun', s_jul:'Seasonal — Jul', s_aug:'Seasonal — Aug',
+  s_sep:'Seasonal — Sep', s_oct:'Seasonal — Oct', s_nov:'Seasonal — Nov', s_dec:'Seasonal — Dec',
+  g_goldP:'Gold Providers', g_goldO:'Gold Avg Ord/Provider',
+  g_entP:'Enterprise Providers', g_entO:'Enterprise Avg Ord/Provider',
+  g_silvP:'Silver Providers', g_silvO:'Silver Avg Ord/Provider',
+  g_momP:'Momentum Providers', g_momO:'Momentum Avg Ord/Provider',
+  g_growP:'Growth Providers', g_growO:'Growth Avg Ord/Provider',
+};
+
+// All tracked assumption IDs (subset — main inputs only, excludes growth plan table rows)
+const TRACKED_IDS = Object.keys(ASSUME_LABELS);
+
+function snapshotAssumptions() {
+  const snap = {};
+  TRACKED_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) snap[id] = el.value;
+  });
+  return snap;
+}
+
+function loadSavedAssumptions() {
+  const saved = JSON.parse(localStorage.getItem('moxieAssumptions') || 'null');
+  if (!saved) return;
+  TRACKED_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && saved[id] !== undefined) el.value = saved[id];
+  });
+}
+
+function saveAndTrackAssumptions() {
+  const prev  = JSON.parse(localStorage.getItem('moxieAssumptions') || 'null');
+  const curr  = snapshotAssumptions();
+
+  // Detect changes vs last saved snapshot
+  if (prev) {
+    const changes = [];
+    TRACKED_IDS.forEach(id => {
+      const pv = parseFloat(prev[id]), cv = parseFloat(curr[id]);
+      if (!isNaN(pv) && !isNaN(cv) && Math.abs(pv - cv) > 0.0001) {
+        changes.push({ id, label: ASSUME_LABELS[id] || id, from: pv, to: cv });
+      }
+    });
+    if (changes.length > 0) {
+      const log = JSON.parse(localStorage.getItem('moxieChangeLog') || '[]');
+      log.unshift({ date: new Date().toISOString(), changes });
+      // Keep last 50 entries
+      if (log.length > 50) log.length = 50;
+      localStorage.setItem('moxieChangeLog', JSON.stringify(log));
+    }
+  }
+
+  // Always save current snapshot
+  localStorage.setItem('moxieAssumptions', JSON.stringify(curr));
+  renderChangeLog();
+}
+
+function renderChangeLog() {
+  const log = JSON.parse(localStorage.getItem('moxieChangeLog') || '[]');
+  const body = document.getElementById('changelogBody');
+  if (!body) return;
+  if (log.length === 0) {
+    body.innerHTML = '<div class="changelog-empty">No changes saved yet.<br>Update an assumption and recalculate to track it.</div>';
+    return;
+  }
+  body.innerHTML = log.map(entry => {
+    const d = new Date(entry.date);
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const changeLines = entry.changes.map(c =>
+      `<div class="changelog-change"><strong>${c.label}</strong><br>
+       <span class="from-val">${c.from}</span> → <span class="to-val">${c.to}</span></div>`
+    ).join('');
+    return `<div class="changelog-entry">
+      <div class="changelog-date">${dateStr} · ${timeStr}</div>
+      ${changeLines}
+    </div>`;
+  }).join('');
+}
+
+function clearChangeLog() {
+  if (!confirm('Clear the full change history? This cannot be undone.')) return;
+  localStorage.removeItem('moxieChangeLog');
+  renderChangeLog();
+}
+
+// ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
   buildGrowthAssumptionsUI();  // build growth assumption inputs before recalc reads them
   buildGrowthPlanTable();       // build the 12×5 editable plan grid
+  loadSavedAssumptions();       // restore persisted assumptions before first recalc
   recalculate();
+  renderChangeLog();            // populate changelog panel on load
 });
 </script>
 <!-- Fixed-position tooltip — repositions above or below based on available viewport space -->
