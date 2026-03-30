@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Moxie Supplies — Operations Capacity Dashboard</title>
@@ -235,7 +234,7 @@
     </div>
   </div>
   </div>
-</div>
+
 
 <!-- ═══ MAIN ═══ -->
 <div class="container">
@@ -246,7 +245,7 @@
     <select class="month-select" id="monthSelect" onchange="recalculate()">
       <option value="0">Jan 2026</option>
       <option value="1">Feb 2026</option>
-      <option value="2" selected>Mar 2026</option>
+      <option value="2" selected="">Mar 2026</option>
       <option value="3">Apr 2026</option>
       <option value="4">May 2026</option>
       <option value="5">Jun 2026</option>
@@ -264,25 +263,25 @@
 
     <div class="kpi-card green" id="kpiUtil">
       <div class="kpi-label">Utilization</div>
-      <div class="kpi-value" id="kvUtil">—</div>
+      <div class="kpi-value" id="kvUtil">90.7%</div>
       <div class="kpi-sub" id="ksUtil">of team capacity used</div>
-      <span class="kpi-badge" id="kbUtil">—</span>
+      <span class="kpi-badge badge-red" id="kbUtil">🚨 OVER 90% — HIRE NOW</span>
     </div>
     <div class="kpi-card" id="kpiAvail">
       <div class="kpi-label">Available Hours</div>
-      <div class="kpi-value" id="kvAvail">—</div>
-      <div class="kpi-sub" id="ksAvail">net hours after breaks & meetings</div>
+      <div class="kpi-value" id="kvAvail">1,191.5</div>
+      <div class="kpi-sub" id="ksAvail">8.15 eff. FTEs × 146.2 net hrs/OA</div>
     </div>
     <div class="kpi-card" id="kpiReq">
       <div class="kpi-label">Required Hours</div>
-      <div class="kpi-value" id="kvReq">—</div>
-      <div class="kpi-sub" id="ksReq">across all task categories</div>
+      <div class="kpi-value" id="kvReq">1,081.0</div>
+      <div class="kpi-sub" id="ksReq">Base: 885.6 · Growth: +195.4 (36 new accts)</div>
     </div>
     <div class="kpi-card" id="kpiSurp">
       <div class="kpi-label">Surplus / (Deficit)</div>
-      <div class="kpi-value" id="kvSurp">—</div>
-      <div class="kpi-sub">HC required: <span id="ksHC">—</span></div>
-      <span class="kpi-badge" id="kbSurp">—</span>
+      <div class="kpi-value" id="kvSurp">+110.6</div>
+      <div class="kpi-sub">HC required: <span id="ksHC">7.39 FTEs</span></div>
+      <span class="kpi-badge badge-green" id="kbSurp">🚨 OVER 90% — HIRE NOW</span>
     </div>
   </div>
 
@@ -300,16 +299,16 @@
       <div class="driver-chip-icon">⏱</div>
       <div>
         <div class="driver-chip-label">Top Task Driver</div>
-        <div class="driver-chip-value" id="driverTask">—</div>
-        <div class="driver-chip-pct" id="driverTaskPct">—</div>
+        <div class="driver-chip-value" id="driverTask">Order Fulfillment</div>
+        <div class="driver-chip-pct" id="driverTaskPct">581.1 hrs · 65.1% of required</div>
       </div>
     </div>
     <div class="driver-chip top-segment">
       <div class="driver-chip-icon">🏷</div>
       <div>
         <div class="driver-chip-label">Top Segment by Hours</div>
-        <div class="driver-chip-value" id="driverSeg">—</div>
-        <div class="driver-chip-pct" id="driverSegPct">—</div>
+        <div class="driver-chip-value" id="driverSeg">Silver</div>
+        <div class="driver-chip-pct" id="driverSegPct">373.4 order hrs · 53.4% of order hours</div>
       </div>
     </div>
     <div class="driver-chip top-segment">
@@ -324,35 +323,35 @@
       <div class="driver-chip-icon">📅</div>
       <div>
         <div class="driver-chip-label">Peak Utilization Month</div>
-        <div class="driver-chip-value" id="driverPeakMonth">—</div>
-        <div class="driver-chip-pct" id="driverPeakPct">—</div>
+        <div class="driver-chip-value" id="driverPeakMonth">Dec 2026</div>
+        <div class="driver-chip-pct" id="driverPeakPct">129.4% utilization · -351 hrs surplus</div>
       </div>
     </div>
   </div>
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab active" onclick="showTab('overview', this)">📊 Overview</button>
+    <button class="tab" onclick="showTab('overview', this)">📊 Overview</button>
     <button class="tab" onclick="showTab('segments', this)">🏷 Segments</button>
     <button class="tab" onclick="showTab('tasks', this)">⏱ Task Breakdown</button>
     <button class="tab" onclick="showTab('forecast', this)">📈 Forecast</button>
     <button class="tab" onclick="showTab('growth', this)">🚀 Growth Model</button>
-    <button class="tab" onclick="showTab('assumptions', this)">⚙ Assumptions</button>
+    <button class="tab active" onclick="showTab('assumptions', this)">⚙ Assumptions</button>
     <button class="tab" onclick="showTab('reference', this)">📋 Reference</button>
   </div>
 
   <!-- ══════════════════════════════════════
        PANEL: OVERVIEW
   ══════════════════════════════════════ -->
-  <div class="panel active" id="panel-overview">
+  <div class="panel" id="panel-overview">
     <div class="two-col">
       <div class="card">
         <div class="card-title">Available vs. Required Hours — All Months</div>
-        <div class="chart-wrap"><canvas id="chartCapacity"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartCapacity" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Monthly Utilization % <span style="font-weight:400;color:var(--muted);font-size:11px">🟡 80% caution &nbsp;🔴 90% at-risk</span></div>
-        <div class="chart-wrap"><canvas id="chartUtil"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartUtil" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
     </div>
     <div class="card">
@@ -375,7 +374,547 @@
               <th>Status</th>
             </tr>
           </thead>
-          <tbody id="overviewTableBody"></tbody>
+          <tbody id="overviewTableBody">
+    <tr style="">
+      <td><strong>Jan 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Jan
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.01</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.01 seasonal index
+= 3,010 existing-account pharma touchpoints">3,010</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="24 new accounts launching in Jan
+See Growth Model tab for segment breakdown"><strong>+24</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   501.6 hrs
+Account setup:       82.6 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          793.0 hrs
+(existing accounts only — excl. growth)">793.0</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  49.7 hrs  (new pharma setup + portal)
+Recurring:   25.9 hrs  (new acct order volume)
+────────────────────────
+Growth total: +75.5 hrs
+(24 new accounts launching this month)">+75.5</span></td>
+      <td class="num"><strong><span class="tip" data-tip="793.0 base + 75.5 growth
+= 868.6 total required hrs
+
+Matches Growth Model tab total">868.6</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 868.6 total req
+= +323.0 hrs">+323.0</span></td>
+      <td class="num"><span class="tip" data-tip="868.6 total req ÷ 1,191.5 avail
+= 72.9%
+(base only: 66.6%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">72.9%</span></td>
+      <td class="num"><span class="tip" data-tip="868.6 total req hrs ÷ 146.2 net hrs/OA
+= 5.94 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">5.94</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Feb 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Feb
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.22</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.22 seasonal index
+= 3,635 existing-account pharma touchpoints">3,635</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="35 new accounts launching in Feb
+See Growth Model tab for segment breakdown"><strong>+35</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   605.9 hrs
+Account setup:       99.7 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          914.5 hrs
+(existing accounts only — excl. growth)">914.5</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  72.7 hrs  (new pharma setup + portal)
+Recurring:   79.6 hrs  (new acct order volume)
+────────────────────────
+Growth total: +152.3 hrs
+(35 new accounts launching this month)">+152.3</span></td>
+      <td class="num"><strong><span class="tip" data-tip="914.5 base + 152.3 growth
+= 1,066.8 total required hrs
+
+Matches Growth Model tab total">1,066.8</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,066.8 total req
+= +124.7 hrs">+124.7</span></td>
+      <td class="num"><span class="tip" data-tip="1,066.8 total req ÷ 1,191.5 avail
+= 89.5%
+(base only: 76.8%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">89.5%</span></td>
+      <td class="num"><span class="tip" data-tip="1,066.8 total req hrs ÷ 146.2 net hrs/OA
+= 7.30 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">7.30</span></td>
+      <td><span class="flag flag-over">🔴 At Risk 85%+</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Mar 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Mar
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.17</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.17 seasonal index
+= 3,486 existing-account pharma touchpoints">3,486</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="36 new accounts launching in Mar
+See Growth Model tab for segment breakdown"><strong>+36</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   581.1 hrs
+Account setup:       95.6 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          885.6 hrs
+(existing accounts only — excl. growth)">885.6</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  74.5 hrs  (new pharma setup + portal)
+Recurring:   120.8 hrs  (new acct order volume)
+────────────────────────
+Growth total: +195.4 hrs
+(36 new accounts launching this month)">+195.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="885.6 base + 195.4 growth
+= 1,081.0 total required hrs
+
+Matches Growth Model tab total">1,081.0</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,081.0 total req
+= +110.6 hrs">+110.6</span></td>
+      <td class="num"><span class="tip" data-tip="1,081.0 total req ÷ 1,191.5 avail
+= 90.7%
+(base only: 74.3%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">90.7%</span></td>
+      <td class="num"><span class="tip" data-tip="1,081.0 total req hrs ÷ 146.2 net hrs/OA
+= 7.39 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">7.39</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fff8e6">
+      <td><strong>Apr 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Apr
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">0.86</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 0.86 seasonal index
+= 2,563 existing-account pharma touchpoints">2,563</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="38 new accounts launching in Apr
+See Growth Model tab for segment breakdown"><strong>+38</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   427.1 hrs
+Account setup:       70.3 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          706.3 hrs
+(existing accounts only — excl. growth)">706.3</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  78.7 hrs  (new pharma setup + portal)
+Recurring:   123.1 hrs  (new acct order volume)
+────────────────────────
+Growth total: +201.8 hrs
+(38 new accounts launching this month)">+201.8</span></td>
+      <td class="num"><strong><span class="tip" data-tip="706.3 base + 201.8 growth
+= 908.1 total required hrs
+
+Matches Growth Model tab total">908.1</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 908.1 total req
+= +283.4 hrs">+283.4</span></td>
+      <td class="num"><span class="tip" data-tip="908.1 total req ÷ 1,191.5 avail
+= 76.2%
+(base only: 59.3%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">76.2%</span></td>
+      <td class="num"><span class="tip" data-tip="908.1 total req hrs ÷ 146.2 net hrs/OA
+= 6.21 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">6.21</span></td>
+      <td><span class="flag flag-warn">🟡 Caution</span></td>
+    </tr>
+    <tr style="background:#fff8e6">
+      <td><strong>May 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for May
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">0.86</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 0.86 seasonal index
+= 2,563 existing-account pharma touchpoints">2,563</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="43 new accounts launching in May
+See Growth Model tab for segment breakdown"><strong>+43</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   427.1 hrs
+Account setup:       70.3 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          706.3 hrs
+(existing accounts only — excl. growth)">706.3</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  88.7 hrs  (new pharma setup + portal)
+Recurring:   161.1 hrs  (new acct order volume)
+────────────────────────
+Growth total: +249.8 hrs
+(43 new accounts launching this month)">+249.8</span></td>
+      <td class="num"><strong><span class="tip" data-tip="706.3 base + 249.8 growth
+= 956.1 total required hrs
+
+Matches Growth Model tab total">956.1</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 956.1 total req
+= +235.5 hrs">+235.5</span></td>
+      <td class="num"><span class="tip" data-tip="956.1 total req ÷ 1,191.5 avail
+= 80.2%
+(base only: 59.3%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">80.2%</span></td>
+      <td class="num"><span class="tip" data-tip="956.1 total req hrs ÷ 146.2 net hrs/OA
+= 6.54 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">6.54</span></td>
+      <td><span class="flag flag-warn">🟡 Caution</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Jun 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Jun
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">0.89</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 0.89 seasonal index
+= 2,652 existing-account pharma touchpoints">2,652</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="47 new accounts launching in Jun
+See Growth Model tab for segment breakdown"><strong>+47</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   442.0 hrs
+Account setup:       72.8 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          723.6 hrs
+(existing accounts only — excl. growth)">723.6</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  97.2 hrs  (new pharma setup + portal)
+Recurring:   209.1 hrs  (new acct order volume)
+────────────────────────
+Growth total: +306.3 hrs
+(47 new accounts launching this month)">+306.3</span></td>
+      <td class="num"><strong><span class="tip" data-tip="723.6 base + 306.3 growth
+= 1,029.9 total required hrs
+
+Matches Growth Model tab total">1,029.9</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,029.9 total req
+= +161.6 hrs">+161.6</span></td>
+      <td class="num"><span class="tip" data-tip="1,029.9 total req ÷ 1,191.5 avail
+= 86.4%
+(base only: 60.7%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">86.4%</span></td>
+      <td class="num"><span class="tip" data-tip="1,029.9 total req hrs ÷ 146.2 net hrs/OA
+= 7.04 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">7.04</span></td>
+      <td><span class="flag flag-over">🔴 At Risk 85%+</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Jul 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Jul
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.02</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.02 seasonal index
+= 3,039 existing-account pharma touchpoints">3,039</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="47 new accounts launching in Jul
+See Growth Model tab for segment breakdown"><strong>+47</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   506.6 hrs
+Account setup:       83.4 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          798.8 hrs
+(existing accounts only — excl. growth)">798.8</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  97.4 hrs  (new pharma setup + portal)
+Recurring:   289.2 hrs  (new acct order volume)
+────────────────────────
+Growth total: +386.6 hrs
+(47 new accounts launching this month)">+386.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="798.8 base + 386.6 growth
+= 1,185.4 total required hrs
+
+Matches Growth Model tab total">1,185.4</span></strong></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,185.4 total req
+= +6.1 hrs">+6.1</span></td>
+      <td class="num"><span class="tip" data-tip="1,185.4 total req ÷ 1,191.5 avail
+= 99.5%
+(base only: 67.0%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">99.5%</span></td>
+      <td class="num"><span class="tip" data-tip="1,185.4 total req hrs ÷ 146.2 net hrs/OA
+= 8.11 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">8.11</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Aug 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Aug
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.04</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.04 seasonal index
+= 3,099 existing-account pharma touchpoints">3,099</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="42 new accounts launching in Aug
+See Growth Model tab for segment breakdown"><strong>+42</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   516.5 hrs
+Account setup:       85.0 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          810.4 hrs
+(existing accounts only — excl. growth)">810.4</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  88.2 hrs  (new pharma setup + portal)
+Recurring:   341.4 hrs  (new acct order volume)
+────────────────────────
+Growth total: +429.5 hrs
+(42 new accounts launching this month)">+429.5</span></td>
+      <td class="num"><strong><span class="tip" data-tip="810.4 base + 429.5 growth
+= 1,239.9 total required hrs
+
+Matches Growth Model tab total">1,239.9</span></strong></td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,239.9 total req
+= -48.4 hrs">-48.4</span></td>
+      <td class="num"><span class="tip" data-tip="1,239.9 total req ÷ 1,191.5 avail
+= 104.1%
+(base only: 68.0%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">104.1%</span></td>
+      <td class="num"><span class="tip" data-tip="1,239.9 total req hrs ÷ 146.2 net hrs/OA
+= 8.48 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">8.48</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Sep 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Sep
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.04</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.04 seasonal index
+= 3,099 existing-account pharma touchpoints">3,099</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="47 new accounts launching in Sep
+See Growth Model tab for segment breakdown"><strong>+47</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   516.5 hrs
+Account setup:       85.0 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          810.4 hrs
+(existing accounts only — excl. growth)">810.4</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  98.2 hrs  (new pharma setup + portal)
+Recurring:   393.6 hrs  (new acct order volume)
+────────────────────────
+Growth total: +491.8 hrs
+(47 new accounts launching this month)">+491.8</span></td>
+      <td class="num"><strong><span class="tip" data-tip="810.4 base + 491.8 growth
+= 1,302.2 total required hrs
+
+Matches Growth Model tab total">1,302.2</span></strong></td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,302.2 total req
+= -110.7 hrs">-110.7</span></td>
+      <td class="num"><span class="tip" data-tip="1,302.2 total req ÷ 1,191.5 avail
+= 109.3%
+(base only: 68.0%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">109.3%</span></td>
+      <td class="num"><span class="tip" data-tip="1,302.2 total req hrs ÷ 146.2 net hrs/OA
+= 8.91 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">8.91</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Oct 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Oct
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.01</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.01 seasonal index
+= 3,010 existing-account pharma touchpoints">3,010</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="54 new accounts launching in Oct
+See Growth Model tab for segment breakdown"><strong>+54</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   501.6 hrs
+Account setup:       82.6 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          793.0 hrs
+(existing accounts only — excl. growth)">793.0</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  112.7 hrs  (new pharma setup + portal)
+Recurring:   440.4 hrs  (new acct order volume)
+────────────────────────
+Growth total: +553.1 hrs
+(54 new accounts launching this month)">+553.1</span></td>
+      <td class="num"><strong><span class="tip" data-tip="793.0 base + 553.1 growth
+= 1,346.2 total required hrs
+
+Matches Growth Model tab total">1,346.2</span></strong></td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,346.2 total req
+= -154.6 hrs">-154.6</span></td>
+      <td class="num"><span class="tip" data-tip="1,346.2 total req ÷ 1,191.5 avail
+= 113.0%
+(base only: 66.6%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">113.0%</span></td>
+      <td class="num"><span class="tip" data-tip="1,346.2 total req hrs ÷ 146.2 net hrs/OA
+= 9.21 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">9.21</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Nov 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Nov
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.06</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.06 seasonal index
+= 3,159 existing-account pharma touchpoints">3,159</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="58 new accounts launching in Nov
+See Growth Model tab for segment breakdown"><strong>+58</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   526.4 hrs
+Account setup:       86.7 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          822.0 hrs
+(existing accounts only — excl. growth)">822.0</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  121.3 hrs  (new pharma setup + portal)
+Recurring:   526.6 hrs  (new acct order volume)
+────────────────────────
+Growth total: +647.9 hrs
+(58 new accounts launching this month)">+647.9</span></td>
+      <td class="num"><strong><span class="tip" data-tip="822.0 base + 647.9 growth
+= 1,469.8 total required hrs
+
+Matches Growth Model tab total">1,469.8</span></strong></td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,469.8 total req
+= -278.3 hrs">-278.3</span></td>
+      <td class="num"><span class="tip" data-tip="1,469.8 total req ÷ 1,191.5 avail
+= 123.4%
+(base only: 69.0%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">123.4%</span></td>
+      <td class="num"><span class="tip" data-tip="1,469.8 total req hrs ÷ 146.2 net hrs/OA
+= 10.05 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">10.05</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Dec 2026</strong></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Dec
+Base = annual average = 1.00
+Adjusts all variable tasks up or down">1.05</span></td>
+      <td class="num"><span class="tip" data-tip="1419 base orders/mo  (330/wk × 4.3 wks)
+× 2.10 avg pharma co/order
+× 1.05 seasonal index
+= 3,129 existing-account pharma touchpoints">3,129</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="63 new accounts launching in Dec
+See Growth Model tab for segment breakdown"><strong>+63</strong></span></td>
+      <td class="num"><span class="tip" data-tip="(9 OAs − 1) + 0.15 lead fraction
+= 8.15 effective FTE
+× 146.2 net hrs/OA/mo
+  (8h/day − 30m lunch − 30m breaks − 1h/wk mtgs)
+= 1,191.5 available hrs">1,191.5</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   521.5 hrs
+Account setup:       85.8 hrs
+Fixed ops overhead:  208.9 hrs
+──────────────────────
+Base total:          816.2 hrs
+(existing accounts only — excl. growth)">816.2</span></td>
+      <td class="num" style="color:var(--accent)">
+        <span class="tip" data-tip="Onboarding:  132.5 hrs  (new pharma setup + portal)
+Recurring:   593.4 hrs  (new acct order volume)
+────────────────────────
+Growth total: +725.9 hrs
+(63 new accounts launching this month)">+725.9</span></td>
+      <td class="num"><strong><span class="tip" data-tip="816.2 base + 725.9 growth
+= 1,542.0 total required hrs
+
+Matches Growth Model tab total">1,542.0</span></strong></td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,542.0 total req
+= -350.5 hrs">-350.5</span></td>
+      <td class="num"><span class="tip" data-tip="1,542.0 total req ÷ 1,191.5 avail
+= 129.4%
+(base only: 68.5%)
+
+🟢 OK &lt; 80%  🟡 Caution 80–89%  🔴 At Risk 90%+">129.4%</span></td>
+      <td class="num"><span class="tip" data-tip="1,542.0 total req hrs ÷ 146.2 net hrs/OA
+= 10.55 FTEs required
+Current: 9 OAs (8.15 eff. FTE)">10.55</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr></tbody>
         </table>
       </div>
     </div>
@@ -388,7 +927,7 @@
 
     <div class="section-header">Segment Overview — Selected Month</div>
     <div class="card">
-      <div class="card-title">Providers, Orders & Hours by Segment — <span id="segMonthLabel">Mar 2026</span></div>
+      <div class="card-title">Providers, Orders &amp; Hours by Segment — <span id="segMonthLabel">Mar 2026</span></div>
       <div style="overflow-x:auto">
         <table>
           <thead>
@@ -404,7 +943,127 @@
               <th class="num">Est. HC Required</th>
             </tr>
           </thead>
-          <tbody id="segmentTableBody"></tbody>
+          <tbody id="segmentTableBody">
+    <tr>
+      <td><span class="seg-dot" style="background:#f4a261"></span><strong>Gold</strong></td>
+      <td class="num">41</td>
+      <td class="num"><span class="tip" data-tip="Avg monthly orders placed
+per active Gold provider">4.34</span></td>
+      <td class="num"><span class="tip" data-tip="41 providers × 4.34 avg orders/mo
+= 177.9 base monthly orders">177.9</span></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Mar 2026
+Scales all variable tasks up or down">1.17</span></td>
+      <td class="num"><span class="tip" data-tip="177.9 base orders × 1.17 seasonal
+= 208.2 adjusted orders">208.2</span></td>
+      <td class="num"><span class="tip" data-tip="208.2 adj orders
+× 2.15 avg pharma co/order (Gold)
+× 10 min/pharma co ÷ 60
+= 74.8 hrs">74.8</span></td>
+      <td class="num"><span class="tip" data-tip="74.8 Gold order hrs
+÷ 698.9 total order hrs
+= 10.7% of order volume">10.7%</span></td>
+      <td class="num"><span class="tip" data-tip="74.8 hrs ÷ 146.2 net hrs/OA
+= 0.51 FTE for Gold orders">0.51</span></td>
+    </tr>
+  
+    <tr>
+      <td><span class="seg-dot" style="background:#e76f51"></span><strong>Enterprise</strong></td>
+      <td class="num">21</td>
+      <td class="num"><span class="tip" data-tip="Avg monthly orders placed
+per active Enterprise provider">3.96</span></td>
+      <td class="num"><span class="tip" data-tip="21 providers × 3.96 avg orders/mo
+= 83.2 base monthly orders">83.2</span></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Mar 2026
+Scales all variable tasks up or down">1.17</span></td>
+      <td class="num"><span class="tip" data-tip="83.2 base orders × 1.17 seasonal
+= 97.3 adjusted orders">97.3</span></td>
+      <td class="num"><span class="tip" data-tip="97.3 adj orders
+× 2.19 avg pharma co/order (Enterprise)
+× 10 min/pharma co ÷ 60
+= 35.6 hrs">35.6</span></td>
+      <td class="num"><span class="tip" data-tip="35.6 Enterprise order hrs
+÷ 698.9 total order hrs
+= 5.1% of order volume">5.1%</span></td>
+      <td class="num"><span class="tip" data-tip="35.6 hrs ÷ 146.2 net hrs/OA
+= 0.24 FTE for Enterprise orders">0.24</span></td>
+    </tr>
+  
+    <tr>
+      <td><span class="seg-dot" style="background:#90e0ef"></span><strong>Silver</strong></td>
+      <td class="num">331</td>
+      <td class="num"><span class="tip" data-tip="Avg monthly orders placed
+per active Silver provider">2.77</span></td>
+      <td class="num"><span class="tip" data-tip="331 providers × 2.77 avg orders/mo
+= 916.9 base monthly orders">916.9</span></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Mar 2026
+Scales all variable tasks up or down">1.17</span></td>
+      <td class="num"><span class="tip" data-tip="916.9 base orders × 1.17 seasonal
+= 1,072.7 adjusted orders">1,072.7</span></td>
+      <td class="num"><span class="tip" data-tip="1,072.7 adj orders
+× 2.09 avg pharma co/order (Silver)
+× 10 min/pharma co ÷ 60
+= 373.4 hrs">373.4</span></td>
+      <td class="num"><span class="tip" data-tip="373.4 Silver order hrs
+÷ 698.9 total order hrs
+= 53.4% of order volume">53.4%</span></td>
+      <td class="num"><span class="tip" data-tip="373.4 hrs ÷ 146.2 net hrs/OA
+= 2.55 FTE for Silver orders">2.55</span></td>
+    </tr>
+  
+    <tr>
+      <td><span class="seg-dot" style="background:#48cae4"></span><strong>Momentum</strong></td>
+      <td class="num">143</td>
+      <td class="num"><span class="tip" data-tip="Avg monthly orders placed
+per active Momentum provider">1.73</span></td>
+      <td class="num"><span class="tip" data-tip="143 providers × 1.73 avg orders/mo
+= 247.4 base monthly orders">247.4</span></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Mar 2026
+Scales all variable tasks up or down">1.17</span></td>
+      <td class="num"><span class="tip" data-tip="247.4 base orders × 1.17 seasonal
+= 289.4 adjusted orders">289.4</span></td>
+      <td class="num"><span class="tip" data-tip="289.4 adj orders
+× 2.12 avg pharma co/order (Momentum)
+× 10 min/pharma co ÷ 60
+= 102.4 hrs">102.4</span></td>
+      <td class="num"><span class="tip" data-tip="102.4 Momentum order hrs
+÷ 698.9 total order hrs
+= 14.7% of order volume">14.7%</span></td>
+      <td class="num"><span class="tip" data-tip="102.4 hrs ÷ 146.2 net hrs/OA
+= 0.70 FTE for Momentum orders">0.70</span></td>
+    </tr>
+  
+    <tr>
+      <td><span class="seg-dot" style="background:#0096c7"></span><strong>Growth</strong></td>
+      <td class="num">173</td>
+      <td class="num"><span class="tip" data-tip="Avg monthly orders placed
+per active Growth provider">1.64</span></td>
+      <td class="num"><span class="tip" data-tip="173 providers × 1.64 avg orders/mo
+= 283.7 base monthly orders">283.7</span></td>
+      <td class="num"><span class="tip" data-tip="Seasonal index for Mar 2026
+Scales all variable tasks up or down">1.17</span></td>
+      <td class="num"><span class="tip" data-tip="283.7 base orders × 1.17 seasonal
+= 332.0 adjusted orders">332.0</span></td>
+      <td class="num"><span class="tip" data-tip="332.0 adj orders
+× 2.04 avg pharma co/order (Growth)
+× 10 min/pharma co ÷ 60
+= 112.8 hrs">112.8</span></td>
+      <td class="num"><span class="tip" data-tip="112.8 Growth order hrs
+÷ 698.9 total order hrs
+= 16.1% of order volume">16.1%</span></td>
+      <td class="num"><span class="tip" data-tip="112.8 hrs ÷ 146.2 net hrs/OA
+= 0.77 FTE for Growth orders">0.77</span></td>
+    </tr>
+  <tr style="font-weight:700; background:#f5f7fa">
+    <td>TOTAL</td>
+    <td class="num">709</td>
+    <td class="num">—</td>
+    <td class="num">1,709.1</td>
+    <td class="num">—</td>
+    <td class="num">1,999.6</td>
+    <td class="num">698.9</td>
+    <td class="num">100%</td>
+    <td class="num">4.78</td>
+  </tr></tbody>
         </table>
       </div>
     </div>
@@ -412,26 +1071,26 @@
     <div class="two-col">
       <div class="card">
         <div class="card-title">Hours by Segment — Selected Month</div>
-        <div class="chart-wrap"><canvas id="chartSegHours"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartSegHours" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Utilization Share by Segment</div>
-        <div class="chart-wrap"><canvas id="chartSegUtil"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartSegUtil" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
     </div>
 
     <div class="section-header">Segment Hours — Full Year View</div>
     <div class="card">
       <div class="card-title">Monthly Order Hours by Segment (Stacked)</div>
-      <div class="chart-wrap-lg"><canvas id="chartSegStack"></canvas></div>
+      <div class="chart-wrap-lg"><canvas id="chartSegStack" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
 
     <div class="card">
       <div class="card-title">Segment Headcount Required — Monthly</div>
-      <div class="chart-wrap"><canvas id="chartSegHC"></canvas></div>
+      <div class="chart-wrap"><canvas id="chartSegHC" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
 
-    <div class="section-header">Segment Revenue & Value (2025–2026 Actuals)</div>
+    <div class="section-header">Segment Revenue &amp; Value (2025–2026 Actuals)</div>
     <div class="card">
       <div class="card-title">Spend Breakdown by Segment — Revenue per Order · Revenue per Line · Ops Cost per $</div>
       <div style="overflow-x:auto">
@@ -451,24 +1110,125 @@
               <th style="min-width:120px">Monthly Spend Share</th>
             </tr>
           </thead>
-          <tbody id="spendTableBody"></tbody>
+          <tbody id="spendTableBody"><tr>
+      <td><span class="spend-rank">1</span></td>
+      <td><span class="seg-dot" style="background:#90e0ef"></span><strong>Silver</strong></td>
+      <td class="num">335</td>
+      <td class="num"><strong>$1,643</strong></td>
+      <td class="num">$25,000</td>
+      <td class="num"><strong>$1,154,244</strong></td>
+      <td class="num">$4,801</td>
+      <td class="num">2.09</td>
+      <td class="num"><strong>$787</strong></td>
+      <td class="num">0.21 hrs</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="spend-bar-wrap" style="flex:1">
+            <div class="spend-bar-fill" style="width:56%;background:#90e0ef"></div>
+          </div>
+          <span style="font-size:11px;width:34px;text-align:right">55.6%</span>
+        </div>
+      </td>
+    </tr><tr>
+      <td><span class="spend-rank">2</span></td>
+      <td><span class="seg-dot" style="background:#f4a261"></span><strong>Gold</strong></td>
+      <td class="num">42</td>
+      <td class="num"><strong>$2,539</strong></td>
+      <td class="num">$38,250</td>
+      <td class="num"><strong>$489,099</strong></td>
+      <td class="num">$13,307</td>
+      <td class="num">2.15</td>
+      <td class="num"><strong>$1,178</strong></td>
+      <td class="num">0.14 hrs</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="spend-bar-wrap" style="flex:1">
+            <div class="spend-bar-fill" style="width:24%;background:#f4a261"></div>
+          </div>
+          <span style="font-size:11px;width:34px;text-align:right">23.6%</span>
+        </div>
+      </td>
+    </tr><tr>
+      <td><span class="spend-rank">3</span></td>
+      <td><span class="seg-dot" style="background:#0096c7"></span><strong>Growth</strong></td>
+      <td class="num">197</td>
+      <td class="num"><strong>$1,257</strong></td>
+      <td class="num">$43,515</td>
+      <td class="num"><strong>$188,364</strong></td>
+      <td class="num">$2,126</td>
+      <td class="num">2.04</td>
+      <td class="num"><strong>$617</strong></td>
+      <td class="num">0.27 hrs</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="spend-bar-wrap" style="flex:1">
+            <div class="spend-bar-fill" style="width:9%;background:#0096c7"></div>
+          </div>
+          <span style="font-size:11px;width:34px;text-align:right">9.1%</span>
+        </div>
+      </td>
+    </tr><tr>
+      <td><span class="spend-rank">4</span></td>
+      <td><span class="seg-dot" style="background:#e76f51"></span><strong>Enterprise</strong></td>
+      <td class="num">20</td>
+      <td class="num"><strong>$3,408</strong></td>
+      <td class="num">$48,750</td>
+      <td class="num"><strong>$140,199</strong></td>
+      <td class="num">$15,868</td>
+      <td class="num">2.19</td>
+      <td class="num"><strong>$1,554</strong></td>
+      <td class="num">0.11 hrs</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="spend-bar-wrap" style="flex:1">
+            <div class="spend-bar-fill" style="width:7%;background:#e76f51"></div>
+          </div>
+          <span style="font-size:11px;width:34px;text-align:right">6.8%</span>
+        </div>
+      </td>
+    </tr><tr>
+      <td><span class="spend-rank">5</span></td>
+      <td><span class="seg-dot" style="background:#48cae4"></span><strong>Momentum</strong></td>
+      <td class="num">162</td>
+      <td class="num"><strong>$1,580</strong></td>
+      <td class="num">$21,495</td>
+      <td class="num"><strong>$103,429</strong></td>
+      <td class="num">$3,090</td>
+      <td class="num">2.12</td>
+      <td class="num"><strong>$744</strong></td>
+      <td class="num">0.22 hrs</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div class="spend-bar-wrap" style="flex:1">
+            <div class="spend-bar-fill" style="width:5%;background:#48cae4"></div>
+          </div>
+          <span style="font-size:11px;width:34px;text-align:right">5.0%</span>
+        </div>
+      </td>
+    </tr><tr style="font-weight:700;background:#f5f7fa">
+    <td></td><td>TOTAL</td>
+    <td class="num">756</td>
+    <td class="num">—</td><td class="num">—</td>
+    <td class="num">$2,075,335</td>
+    <td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">100%</td>
+  </tr></tbody>
         </table>
       </div>
     </div>
     <div class="two-col">
       <div class="card">
         <div class="card-title">Monthly Revenue by Segment</div>
-        <div class="chart-wrap"><canvas id="chartSpendBar"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartSpendBar" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Revenue per Provider vs. Ops Hours per Provider</div>
-        <div class="chart-wrap"><canvas id="chartSpendEfficiency"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartSpendEfficiency" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
     </div>
 
     <div class="section-header">Pharma Lines per Order Distribution (2025–2026 Actuals) — each line = 10 min processing</div>
     <div class="card">
-      <div class="card-title">Pharma Companies per Order by Segment — Distribution & Weighted Avg Lines</div>
+      <div class="card-title">Pharma Companies per Order by Segment — Distribution &amp; Weighted Avg Lines</div>
       <div style="overflow-x:auto">
         <table>
           <thead>
@@ -485,7 +1245,62 @@
               <th style="min-width:200px">Distribution</th>
             </tr>
           </thead>
-          <tbody id="pharmaTableBody"></tbody>
+          <tbody id="pharmaTableBody"><tr>
+      <td><span class="seg-dot" style="background:#e76f51"></span><strong>Enterprise</strong></td>
+      <td class="num">114</td>
+      <td class="num">5 <span style="color:var(--muted);font-size:11px">(4.4%)</span></td>
+      <td class="num">87 <span style="color:var(--muted);font-size:11px">(76.3%)</span></td>
+      <td class="num">17 <span style="color:var(--muted);font-size:11px">(14.9%)</span></td>
+      <td class="num">5 <span style="color:var(--muted);font-size:11px">(4.4%)</span></td>
+      <td class="num"><strong>2.19</strong></td>
+      <td class="num">21.9 min</td>
+      <td class="num"><strong>$1,554</strong></td>
+      <td><div class="pharma-dist-row"><div class="pharma-dist-seg" style="width:4.4%;background:#264653;min-width:auto" title="1 pharma: 4.4%"></div><div class="pharma-dist-seg" style="width:76.3%;background:#2a9d8f;min-width:auto" title="2 pharma: 76.3%">76%</div><div class="pharma-dist-seg" style="width:14.9%;background:#e9c46a;min-width:auto" title="3 pharma: 14.9%">15%</div><div class="pharma-dist-seg" style="width:4.4%;background:#e76f51;min-width:auto" title="4+ pharma: 4.4%"></div></div></td>
+    </tr><tr>
+      <td><span class="seg-dot" style="background:#f4a261"></span><strong>Gold</strong></td>
+      <td class="num">479</td>
+      <td class="num">36 <span style="color:var(--muted);font-size:11px">(7.5%)</span></td>
+      <td class="num">348 <span style="color:var(--muted);font-size:11px">(72.7%)</span></td>
+      <td class="num">80 <span style="color:var(--muted);font-size:11px">(16.7%)</span></td>
+      <td class="num">15 <span style="color:var(--muted);font-size:11px">(3.1%)</span></td>
+      <td class="num"><strong>2.15</strong></td>
+      <td class="num">21.5 min</td>
+      <td class="num"><strong>$1,178</strong></td>
+      <td><div class="pharma-dist-row"><div class="pharma-dist-seg" style="width:7.5%;background:#264653;min-width:auto" title="1 pharma: 7.5%"></div><div class="pharma-dist-seg" style="width:72.7%;background:#2a9d8f;min-width:auto" title="2 pharma: 72.7%">73%</div><div class="pharma-dist-seg" style="width:16.7%;background:#e9c46a;min-width:auto" title="3 pharma: 16.7%">17%</div><div class="pharma-dist-seg" style="width:3.1%;background:#e76f51;min-width:auto" title="4+ pharma: 3.1%"></div></div></td>
+    </tr><tr>
+      <td><span class="seg-dot" style="background:#90e0ef"></span><strong>Silver</strong></td>
+      <td class="num">1,641</td>
+      <td class="num">143 <span style="color:var(--muted);font-size:11px">(8.7%)</span></td>
+      <td class="num">1,237 <span style="color:var(--muted);font-size:11px">(75.4%)</span></td>
+      <td class="num">234 <span style="color:var(--muted);font-size:11px">(14.3%)</span></td>
+      <td class="num">27 <span style="color:var(--muted);font-size:11px">(1.7%)</span></td>
+      <td class="num"><strong>2.09</strong></td>
+      <td class="num">20.9 min</td>
+      <td class="num"><strong>$787</strong></td>
+      <td><div class="pharma-dist-row"><div class="pharma-dist-seg" style="width:8.7%;background:#264653;min-width:auto" title="1 pharma: 8.7%">9%</div><div class="pharma-dist-seg" style="width:75.4%;background:#2a9d8f;min-width:auto" title="2 pharma: 75.4%">75%</div><div class="pharma-dist-seg" style="width:14.3%;background:#e9c46a;min-width:auto" title="3 pharma: 14.3%">14%</div><div class="pharma-dist-seg" style="width:1.7%;background:#e76f51;min-width:0" title="4+ pharma: 1.7%"></div></div></td>
+    </tr><tr>
+      <td><span class="seg-dot" style="background:#48cae4"></span><strong>Momentum</strong></td>
+      <td class="num">171</td>
+      <td class="num">29 <span style="color:var(--muted);font-size:11px">(17%)</span></td>
+      <td class="num">102 <span style="color:var(--muted);font-size:11px">(59.7%)</span></td>
+      <td class="num">30 <span style="color:var(--muted);font-size:11px">(17.5%)</span></td>
+      <td class="num">10 <span style="color:var(--muted);font-size:11px">(5.9%)</span></td>
+      <td class="num"><strong>2.12</strong></td>
+      <td class="num">21.2 min</td>
+      <td class="num"><strong>$744</strong></td>
+      <td><div class="pharma-dist-row"><div class="pharma-dist-seg" style="width:17%;background:#264653;min-width:auto" title="1 pharma: 17%">17%</div><div class="pharma-dist-seg" style="width:59.7%;background:#2a9d8f;min-width:auto" title="2 pharma: 59.7%">60%</div><div class="pharma-dist-seg" style="width:17.5%;background:#e9c46a;min-width:auto" title="3 pharma: 17.5%">18%</div><div class="pharma-dist-seg" style="width:5.9%;background:#e76f51;min-width:auto" title="4+ pharma: 5.9%"></div></div></td>
+    </tr><tr>
+      <td><span class="seg-dot" style="background:#0096c7"></span><strong>Growth</strong></td>
+      <td class="num">341</td>
+      <td class="num">38 <span style="color:var(--muted);font-size:11px">(11.1%)</span></td>
+      <td class="num">259 <span style="color:var(--muted);font-size:11px">(76%)</span></td>
+      <td class="num">37 <span style="color:var(--muted);font-size:11px">(10.9%)</span></td>
+      <td class="num">7 <span style="color:var(--muted);font-size:11px">(2.1%)</span></td>
+      <td class="num"><strong>2.04</strong></td>
+      <td class="num">20.4 min</td>
+      <td class="num"><strong>$617</strong></td>
+      <td><div class="pharma-dist-row"><div class="pharma-dist-seg" style="width:11.1%;background:#264653;min-width:auto" title="1 pharma: 11.1%">11%</div><div class="pharma-dist-seg" style="width:76%;background:#2a9d8f;min-width:auto" title="2 pharma: 76%">76%</div><div class="pharma-dist-seg" style="width:10.9%;background:#e9c46a;min-width:auto" title="3 pharma: 10.9%">11%</div><div class="pharma-dist-seg" style="width:2.1%;background:#e76f51;min-width:0" title="4+ pharma: 2.1%"></div></div></td>
+    </tr></tbody>
         </table>
       </div>
       <div style="margin-top:16px">
@@ -499,7 +1314,7 @@
     </div>
     <div class="card">
       <div class="card-title">Pharma Lines Distribution — Stacked % by Segment</div>
-      <div class="chart-wrap"><canvas id="chartPharmaStack"></canvas></div>
+      <div class="chart-wrap"><canvas id="chartPharmaStack" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
   </div>
 
@@ -510,7 +1325,7 @@
     <div class="two-col">
       <div class="card">
         <div class="card-title">Hours by Task Category — <span id="taskMonthLabel">Mar 2026</span></div>
-        <div class="chart-wrap-lg"><canvas id="chartTaskDonut"></canvas></div>
+        <div class="chart-wrap-lg"><canvas id="chartTaskDonut" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Task Hours Detail</div>
@@ -526,14 +1341,140 @@
                 <th>Type</th>
               </tr>
             </thead>
-            <tbody id="taskTableBody"></tbody>
+            <tbody id="taskTableBody">
+    <tr>
+      <td>Order Fulfillment</td>
+      <td>3486 pharma co touchpoints</td>
+      <td class="num">10</td>
+      <td class="num">581.1</td>
+      <td class="num">65.1%</td>
+      <td><span class="pill pill-blue">Variable</span></td>
+    </tr>
+  
+    <tr>
+      <td>Order Tracking</td>
+      <td>65/day × 21.5 days</td>
+      <td class="num">7</td>
+      <td class="num">163.0</td>
+      <td class="num">18.3%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Net New Account Setup</td>
+      <td>288 setups</td>
+      <td class="num">15</td>
+      <td class="num">72.0</td>
+      <td class="num">8.1%</td>
+      <td><span class="pill pill-blue">Variable</span></td>
+    </tr>
+  
+    <tr>
+      <td>Email / Slack Sweep</td>
+      <td>2/day sweep</td>
+      <td class="num">20</td>
+      <td class="num">14.3</td>
+      <td class="num">1.6%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Shift Handoffs</td>
+      <td>8 OAs × daily</td>
+      <td class="num">5</td>
+      <td class="num">14.3</td>
+      <td class="num">1.6%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>COA / MD / Delink</td>
+      <td>51 actions</td>
+      <td class="num">15</td>
+      <td class="num">12.9</td>
+      <td class="num">1.4%</td>
+      <td><span class="pill pill-blue">Variable</span></td>
+    </tr>
+  
+    <tr>
+      <td>Migration Account Setup</td>
+      <td>29 setups</td>
+      <td class="num">15</td>
+      <td class="num">7.3</td>
+      <td class="num">0.8%</td>
+      <td><span class="pill pill-blue">Variable</span></td>
+    </tr>
+  
+    <tr>
+      <td>Shopify / Tracker Sweep</td>
+      <td>1/day sweep</td>
+      <td class="num">20</td>
+      <td class="num">7.2</td>
+      <td class="num">0.8%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Monthly Reconciliation</td>
+      <td>3× per month</td>
+      <td class="num">120</td>
+      <td class="num">6.0</td>
+      <td class="num">0.7%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Portal Checks</td>
+      <td>1/day check</td>
+      <td class="num">15</td>
+      <td class="num">5.4</td>
+      <td class="num">0.6%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Merz Samples</td>
+      <td>1/wk × 4.3 wks</td>
+      <td class="num">60</td>
+      <td class="num">4.3</td>
+      <td class="num">0.5%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Customer Inquiries</td>
+      <td>14 inquiries</td>
+      <td class="num">15</td>
+      <td class="num">3.5</td>
+      <td class="num">0.4%</td>
+      <td><span class="pill pill-blue">Variable</span></td>
+    </tr>
+  
+    <tr>
+      <td>SOP Updates</td>
+      <td>5/month</td>
+      <td class="num">10</td>
+      <td class="num">0.8</td>
+      <td class="num">0.1%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  
+    <tr>
+      <td>Price Discrepancy</td>
+      <td>3/wk issues</td>
+      <td class="num">3</td>
+      <td class="num">0.6</td>
+      <td class="num">0.1%</td>
+      <td><span class="pill pill-green">Fixed</span></td>
+    </tr>
+  <tr style="font-weight:700; background:#f5f7fa"><td>TOTAL</td><td></td><td></td><td class="num">892.8</td><td class="num">100%</td><td></td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Variable vs. Fixed Task Hours — Monthly</div>
-      <div class="chart-wrap"><canvas id="chartTaskBar"></canvas></div>
+      <div class="chart-wrap"><canvas id="chartTaskBar" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
 
     <div class="section-header">Section F · Additional Operational Tasks — Reference Table</div>
@@ -551,7 +1492,91 @@
               <th>Notes / Source</th>
             </tr>
           </thead>
-          <tbody id="sectionFTableBody"></tbody>
+          <tbody id="sectionFTableBody">
+    <tr>
+      <td>Order Tracking</td>
+      <td class="num">65</td>
+      <td class="num">7</td>
+      <td>Daily × Avg Work Days</td>
+      <td class="num"><strong>163.04</strong></td>
+      <td style="font-size:12px;color:var(--muted)">65 orders/day × 7 min/order × 21.5 days</td>
+    </tr>
+  
+    <tr>
+      <td>Email / Slack Sweep</td>
+      <td class="num">2</td>
+      <td class="num">20</td>
+      <td>Daily × Avg Work Days</td>
+      <td class="num"><strong>14.33</strong></td>
+      <td style="font-size:12px;color:var(--muted)">~200 emails/day; 20 min total daily sweep</td>
+    </tr>
+  
+    <tr style="opacity:0.6">
+      <td>Shopify / Order Tracker Sweep <span style="font-size:10px;color:var(--muted)">(excl. from capacity total)</span></td>
+      <td class="num">1</td>
+      <td class="num">20</td>
+      <td>Daily × Avg Work Days</td>
+      <td class="num"><strong>7.17</strong></td>
+      <td style="font-size:12px;color:var(--muted)">1 sweep/day × 20 min; aligns portal/Shopify/Tracker</td>
+    </tr>
+  
+    <tr>
+      <td>Shift Handoffs &amp; Endorsements</td>
+      <td class="num">8</td>
+      <td class="num">5</td>
+      <td>OAs × Avg Work Days</td>
+      <td class="num"><strong>14.33</strong></td>
+      <td style="font-size:12px;color:var(--muted)">8 OAs managed daily × 5 min endorsement each</td>
+    </tr>
+  
+    <tr>
+      <td>Merz Samples Consolidation</td>
+      <td class="num">1</td>
+      <td class="num">60</td>
+      <td>Runs/Wk × Weeks/Month</td>
+      <td class="num"><strong>4.30</strong></td>
+      <td style="font-size:12px;color:var(--muted)">1 run/week (Fri); 60 min per run; ~30–40 entries</td>
+    </tr>
+  
+    <tr>
+      <td>Portal Checks (Outside Moxie)</td>
+      <td class="num">1</td>
+      <td class="num">15</td>
+      <td>Daily × Avg Work Days</td>
+      <td class="num"><strong>5.38</strong></td>
+      <td style="font-size:12px;color:var(--muted)">1 check/day; Allergan + Galderma; 15 min total</td>
+    </tr>
+  
+    <tr>
+      <td>Monthly Reconciliation</td>
+      <td class="num">3</td>
+      <td class="num">120</td>
+      <td>Fixed Monthly</td>
+      <td class="num"><strong>6.00</strong></td>
+      <td style="font-size:12px;color:var(--muted)">3× per month × 120 min (2 hrs) each</td>
+    </tr>
+  
+    <tr>
+      <td>Price Discrepancy Alignment</td>
+      <td class="num">3</td>
+      <td class="num">3</td>
+      <td>Issues/Wk × Wks/Month</td>
+      <td class="num"><strong>0.64</strong></td>
+      <td style="font-size:12px;color:var(--muted)">≥3 issues/week × 3 min each</td>
+    </tr>
+  
+    <tr>
+      <td>SOP Updates &amp; Documentation</td>
+      <td class="num">5</td>
+      <td class="num">10</td>
+      <td>Fixed Monthly</td>
+      <td class="num"><strong>0.83</strong></td>
+      <td style="font-size:12px;color:var(--muted)">5 updates/month × 10 min each</td>
+    </tr>
+  <tr style="font-weight:700;background:#f5f7fa">
+    <td>TOTAL ADDITIONAL TASK HOURS</td><td></td><td></td><td></td>
+    <td class="num">216.03</td><td></td>
+  </tr></tbody>
         </table>
       </div>
     </div>
@@ -561,11 +1586,11 @@
        PANEL: FORECAST
   ══════════════════════════════════════ -->
   <div class="panel" id="panel-forecast">
-    <div class="forecast-insight" id="forecastInsight">Loading forecast analysis…</div>
+    <div class="forecast-insight" id="forecastInsight"><strong>Forecast Summary:</strong> Peak demand in <strong>Feb</strong> (1,555 orders · 71.6% utilization). Lightest month is <strong>Mar</strong> (1,058 orders · 56.6% utilization). All months forecast within available capacity at current headcount.</div>
     <div class="two-col">
       <div class="card">
         <div class="card-title">Forecast Orders vs. Capacity Headroom</div>
-        <div class="chart-wrap-lg"><canvas id="chartForecast"></canvas></div>
+        <div class="chart-wrap-lg"><canvas id="chartForecast" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Forecast Summary Table</div>
@@ -582,14 +1607,230 @@
                 <th>Flag</th>
               </tr>
             </thead>
-            <tbody id="forecastTableBody"></tbody>
+            <tbody id="forecastTableBody">
+    <tr>
+      <td><strong>Jan 2026</strong></td>
+      <td class="num">1,289</td>
+      <td class="num"><span class="tip" data-tip="1,289 forecast orders
+× 2.10 avg pharma co/order
+= 2,707 pharma touchpoints">2,707</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   451.1 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       82.6 hrs
+──────────────────────────
+Total:               742.6 hrs">742.6</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 742.6 req
+= +449.0 hrs">+449.0</span></td>
+      <td class="num"><span class="tip" data-tip="742.6 req hrs ÷ 1,191.5 avail hrs
+= 62.3%">62.3%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Feb 2026</strong></td>
+      <td class="num">1,555</td>
+      <td class="num"><span class="tip" data-tip="1,555 forecast orders
+× 2.10 avg pharma co/order
+= 3,266 pharma touchpoints">3,266</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   544.3 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       99.7 hrs
+──────────────────────────
+Total:               852.8 hrs">852.8</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 852.8 req
+= +338.7 hrs">+338.7</span></td>
+      <td class="num"><span class="tip" data-tip="852.8 req hrs ÷ 1,191.5 avail hrs
+= 71.6%">71.6%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Mar 2026</strong></td>
+      <td class="num">1,058</td>
+      <td class="num"><span class="tip" data-tip="1,058 forecast orders
+× 2.10 avg pharma co/order
+= 2,222 pharma touchpoints">2,222</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   370.3 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       95.6 hrs
+──────────────────────────
+Total:               674.8 hrs">674.8</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 674.8 req
+= +516.7 hrs">+516.7</span></td>
+      <td class="num"><span class="tip" data-tip="674.8 req hrs ÷ 1,191.5 avail hrs
+= 56.6%">56.6%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Apr 2026</strong></td>
+      <td class="num">1,492</td>
+      <td class="num"><span class="tip" data-tip="1,492 forecast orders
+× 2.10 avg pharma co/order
+= 3,133 pharma touchpoints">3,133</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   522.2 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       70.3 hrs
+──────────────────────────
+Total:               801.4 hrs">801.4</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 801.4 req
+= +390.2 hrs">+390.2</span></td>
+      <td class="num"><span class="tip" data-tip="801.4 req hrs ÷ 1,191.5 avail hrs
+= 67.3%">67.3%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>May 2026</strong></td>
+      <td class="num">1,097</td>
+      <td class="num"><span class="tip" data-tip="1,097 forecast orders
+× 2.10 avg pharma co/order
+= 2,304 pharma touchpoints">2,304</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   384.0 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       70.3 hrs
+──────────────────────────
+Total:               663.1 hrs">663.1</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 663.1 req
+= +528.4 hrs">+528.4</span></td>
+      <td class="num"><span class="tip" data-tip="663.1 req hrs ÷ 1,191.5 avail hrs
+= 55.7%">55.7%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Jun 2026</strong></td>
+      <td class="num">1,097</td>
+      <td class="num"><span class="tip" data-tip="1,097 forecast orders
+× 2.10 avg pharma co/order
+= 2,304 pharma touchpoints">2,304</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   384.0 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       72.8 hrs
+──────────────────────────
+Total:               665.6 hrs">665.6</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 665.6 req
+= +526.0 hrs">+526.0</span></td>
+      <td class="num"><span class="tip" data-tip="665.6 req hrs ÷ 1,191.5 avail hrs
+= 55.9%">55.9%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Jul 2026</strong></td>
+      <td class="num">1,135</td>
+      <td class="num"><span class="tip" data-tip="1,135 forecast orders
+× 2.10 avg pharma co/order
+= 2,384 pharma touchpoints">2,384</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   397.3 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       83.4 hrs
+──────────────────────────
+Total:               689.5 hrs">689.5</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 689.5 req
+= +502.0 hrs">+502.0</span></td>
+      <td class="num"><span class="tip" data-tip="689.5 req hrs ÷ 1,191.5 avail hrs
+= 57.9%">57.9%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Aug 2026</strong></td>
+      <td class="num">1,300</td>
+      <td class="num"><span class="tip" data-tip="1,300 forecast orders
+× 2.10 avg pharma co/order
+= 2,730 pharma touchpoints">2,730</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   455.0 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       85.0 hrs
+──────────────────────────
+Total:               748.9 hrs">748.9</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 748.9 req
+= +442.6 hrs">+442.6</span></td>
+      <td class="num"><span class="tip" data-tip="748.9 req hrs ÷ 1,191.5 avail hrs
+= 62.9%">62.9%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Sep 2026</strong></td>
+      <td class="num">1,326</td>
+      <td class="num"><span class="tip" data-tip="1,326 forecast orders
+× 2.10 avg pharma co/order
+= 2,785 pharma touchpoints">2,785</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   464.1 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       85.0 hrs
+──────────────────────────
+Total:               758.0 hrs">758.0</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 758.0 req
+= +433.5 hrs">+433.5</span></td>
+      <td class="num"><span class="tip" data-tip="758.0 req hrs ÷ 1,191.5 avail hrs
+= 63.6%">63.6%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Oct 2026</strong></td>
+      <td class="num">1,283</td>
+      <td class="num"><span class="tip" data-tip="1,283 forecast orders
+× 2.10 avg pharma co/order
+= 2,694 pharma touchpoints">2,694</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   449.1 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       82.6 hrs
+──────────────────────────
+Total:               740.5 hrs">740.5</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 740.5 req
+= +451.1 hrs">+451.1</span></td>
+      <td class="num"><span class="tip" data-tip="740.5 req hrs ÷ 1,191.5 avail hrs
+= 62.1%">62.1%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Nov 2026</strong></td>
+      <td class="num">1,352</td>
+      <td class="num"><span class="tip" data-tip="1,352 forecast orders
+× 2.10 avg pharma co/order
+= 2,839 pharma touchpoints">2,839</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   473.2 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       86.7 hrs
+──────────────────────────
+Total:               768.7 hrs">768.7</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 768.7 req
+= +422.8 hrs">+422.8</span></td>
+      <td class="num"><span class="tip" data-tip="768.7 req hrs ÷ 1,191.5 avail hrs
+= 64.5%">64.5%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  
+    <tr>
+      <td><strong>Dec 2026</strong></td>
+      <td class="num">1,339</td>
+      <td class="num"><span class="tip" data-tip="1,339 forecast orders
+× 2.10 avg pharma co/order
+= 2,812 pharma touchpoints">2,812</span></td>
+      <td class="num"><span class="tip" data-tip="Order fulfillment:   468.6 hrs
+Fixed ops overhead:  208.9 hrs
+Account setup:       85.8 hrs
+──────────────────────────
+Total:               763.3 hrs">763.3</span></td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 763.3 req
+= +428.2 hrs">+428.2</span></td>
+      <td class="num"><span class="tip" data-tip="763.3 req hrs ÷ 1,191.5 avail hrs
+= 64.1%">64.1%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+  </tbody>
           </table>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-title">Capacity Headroom Over Forecast Period</div>
-      <div class="chart-wrap"><canvas id="chartForecastSurplus"></canvas></div>
+      <div class="chart-wrap"><canvas id="chartForecastSurplus" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
   </div>
 
@@ -602,31 +1843,109 @@
     <div class="impact-row" id="growthImpactRow">
       <div class="impact-card">
         <div class="impact-card-label">New Accounts (Full Year)</div>
-        <div class="impact-card-value" id="gkNewAccts">—</div>
-        <div class="impact-card-sub" id="gkNewAcctsSub">across all segments</div>
+        <div class="impact-card-value" id="gkNewAccts">534</div>
+        <div class="impact-card-sub" id="gkNewAcctsSub">100 Enterprise · 132 Gold · 98 Silver · 119 Momentum · 85 Growth</div>
       </div>
       <div class="impact-card">
         <div class="impact-card-label">Peak Onboarding Month</div>
-        <div class="impact-card-value" id="gkPeakOnboard">—</div>
-        <div class="impact-card-sub" id="gkPeakOnboardSub">one-time setup hours</div>
+        <div class="impact-card-value" id="gkPeakOnboard">132.5 hrs</div>
+        <div class="impact-card-sub" id="gkPeakOnboardSub">Dec 2026 · 63 new accounts</div>
       </div>
       <div class="impact-card" style="border-left:4px solid var(--accent2)">
         <div class="impact-card-label">Recurring Volume Added (Dec)</div>
-        <div class="impact-card-value" id="gkRecurring">—</div>
-        <div class="impact-card-sub" id="gkRecurringSub">additional hrs/month by year-end</div>
+        <div class="impact-card-value" id="gkRecurring">593.4 hrs</div>
+        <div class="impact-card-sub" id="gkRecurringSub">534 cumulative new accounts by Dec</div>
       </div>
-      <div class="impact-card" id="gkCapCard">
+      <div class="impact-card" id="gkCapCard" style="border-left-color: var(--red); border-left-width: 4px; border-left-style: solid;">
         <div class="impact-card-label">Capacity Risk</div>
-        <div class="impact-card-value" id="gkCapRisk">—</div>
-        <div class="impact-card-sub" id="gkCapRiskSub">months near/over limit</div>
+        <div class="impact-card-value" id="gkCapRisk">5 month(s) OVER</div>
+        <div class="impact-card-sub" id="gkCapRiskSub">⚠ Headcount addition may be needed</div>
       </div>
     </div>
 
     <!-- Per-segment growth assumptions -->
     <div class="section-header">Per-Segment Growth Assumptions</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:16px" id="growthSegAssume">
-      <!-- rendered by JS -->
+    <div class="growth-seg-assume">
+      <h4><span class="seg-dot" style="background:#e76f51"></span>Enterprise</h4>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">New acct orders/month</span>
+        <input class="growth-assume-input" id="ga_orders_Enterprise" type="number" value="3.96" step="0.1" onchange="renderGrowth()">
+      </div>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">Portal setup (min/acct)</span>
+        <input class="growth-assume-input" id="ga_portal_Enterprise" type="number" value="45" onchange="renderGrowth()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Pharma setup: 3.96 ord × lines × 10 min<br>
+        Onboard: 45 min/acct (portal+system)
+      </div>
     </div>
+  
+    <div class="growth-seg-assume">
+      <h4><span class="seg-dot" style="background:#f4a261"></span>Gold</h4>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">New acct orders/month</span>
+        <input class="growth-assume-input" id="ga_orders_Gold" type="number" value="4.34" step="0.1" onchange="renderGrowth()">
+      </div>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">Portal setup (min/acct)</span>
+        <input class="growth-assume-input" id="ga_portal_Gold" type="number" value="30" onchange="renderGrowth()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Pharma setup: 4.34 ord × lines × 10 min<br>
+        Onboard: 30 min/acct (portal+system)
+      </div>
+    </div>
+  
+    <div class="growth-seg-assume">
+      <h4><span class="seg-dot" style="background:#90e0ef"></span>Silver</h4>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">New acct orders/month</span>
+        <input class="growth-assume-input" id="ga_orders_Silver" type="number" value="2.77" step="0.1" onchange="renderGrowth()">
+      </div>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">Portal setup (min/acct)</span>
+        <input class="growth-assume-input" id="ga_portal_Silver" type="number" value="20" onchange="renderGrowth()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Pharma setup: 2.77 ord × lines × 10 min<br>
+        Onboard: 20 min/acct (portal+system)
+      </div>
+    </div>
+  
+    <div class="growth-seg-assume">
+      <h4><span class="seg-dot" style="background:#48cae4"></span>Momentum</h4>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">New acct orders/month</span>
+        <input class="growth-assume-input" id="ga_orders_Momentum" type="number" value="1.73" step="0.1" onchange="renderGrowth()">
+      </div>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">Portal setup (min/acct)</span>
+        <input class="growth-assume-input" id="ga_portal_Momentum" type="number" value="20" onchange="renderGrowth()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Pharma setup: 1.73 ord × lines × 10 min<br>
+        Onboard: 20 min/acct (portal+system)
+      </div>
+    </div>
+  
+    <div class="growth-seg-assume">
+      <h4><span class="seg-dot" style="background:#0096c7"></span>Growth</h4>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">New acct orders/month</span>
+        <input class="growth-assume-input" id="ga_orders_Growth" type="number" value="1.64" step="0.1" onchange="renderGrowth()">
+      </div>
+      <div class="growth-assume-row">
+        <span class="growth-assume-label">Portal setup (min/acct)</span>
+        <input class="growth-assume-input" id="ga_portal_Growth" type="number" value="15" onchange="renderGrowth()">
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">
+        Pharma setup: 1.64 ord × lines × 10 min<br>
+        Onboard: 15 min/acct (portal+system)
+      </div>
+    </div>
+  </div>
 
     <!-- Monthly new accounts planning table -->
     <div class="section-header">Monthly New Account Plan — Edit or Sync from GSheet</div>
@@ -648,7 +1967,179 @@
               <th>Total New</th>
             </tr>
           </thead>
-          <tbody id="growthPlanBody"><!-- rendered by JS --></tbody>
+          <tbody id="growthPlanBody"><tr>
+      <td>Jan 2026</td>
+      
+      <td><input class="growth-input" id="gp_0_Enterprise" type="number" min="0" value="3" onchange="updateGrowthPlan(0,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_0_Gold" type="number" min="0" value="8" onchange="updateGrowthPlan(0,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_0_Silver" type="number" min="0" value="3" onchange="updateGrowthPlan(0,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_0_Momentum" type="number" min="0" value="6" onchange="updateGrowthPlan(0,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_0_Growth" type="number" min="0" value="4" onchange="updateGrowthPlan(0,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">24</td>
+    </tr><tr>
+      <td>Feb 2026</td>
+      
+      <td><input class="growth-input" id="gp_1_Enterprise" type="number" min="0" value="4" onchange="updateGrowthPlan(1,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_1_Gold" type="number" min="0" value="13" onchange="updateGrowthPlan(1,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_1_Silver" type="number" min="0" value="8" onchange="updateGrowthPlan(1,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_1_Momentum" type="number" min="0" value="6" onchange="updateGrowthPlan(1,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_1_Growth" type="number" min="0" value="4" onchange="updateGrowthPlan(1,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">35</td>
+    </tr><tr>
+      <td>Mar 2026</td>
+      
+      <td><input class="growth-input" id="gp_2_Enterprise" type="number" min="0" value="6" onchange="updateGrowthPlan(2,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_2_Gold" type="number" min="0" value="9" onchange="updateGrowthPlan(2,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_2_Silver" type="number" min="0" value="8" onchange="updateGrowthPlan(2,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_2_Momentum" type="number" min="0" value="6" onchange="updateGrowthPlan(2,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_2_Growth" type="number" min="0" value="7" onchange="updateGrowthPlan(2,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">36</td>
+    </tr><tr>
+      <td>Apr 2026</td>
+      
+      <td><input class="growth-input" id="gp_3_Enterprise" type="number" min="0" value="6" onchange="updateGrowthPlan(3,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_3_Gold" type="number" min="0" value="10" onchange="updateGrowthPlan(3,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_3_Silver" type="number" min="0" value="7" onchange="updateGrowthPlan(3,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_3_Momentum" type="number" min="0" value="9" onchange="updateGrowthPlan(3,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_3_Growth" type="number" min="0" value="6" onchange="updateGrowthPlan(3,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">38</td>
+    </tr><tr>
+      <td>May 2026</td>
+      
+      <td><input class="growth-input" id="gp_4_Enterprise" type="number" min="0" value="6" onchange="updateGrowthPlan(4,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_4_Gold" type="number" min="0" value="11" onchange="updateGrowthPlan(4,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_4_Silver" type="number" min="0" value="8" onchange="updateGrowthPlan(4,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_4_Momentum" type="number" min="0" value="11" onchange="updateGrowthPlan(4,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_4_Growth" type="number" min="0" value="7" onchange="updateGrowthPlan(4,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">43</td>
+    </tr><tr>
+      <td>Jun 2026</td>
+      
+      <td><input class="growth-input" id="gp_5_Enterprise" type="number" min="0" value="8" onchange="updateGrowthPlan(5,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_5_Gold" type="number" min="0" value="10" onchange="updateGrowthPlan(5,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_5_Silver" type="number" min="0" value="9" onchange="updateGrowthPlan(5,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_5_Momentum" type="number" min="0" value="12" onchange="updateGrowthPlan(5,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_5_Growth" type="number" min="0" value="8" onchange="updateGrowthPlan(5,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">47</td>
+    </tr><tr>
+      <td>Jul 2026</td>
+      
+      <td><input class="growth-input" id="gp_6_Enterprise" type="number" min="0" value="8" onchange="updateGrowthPlan(6,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_6_Gold" type="number" min="0" value="11" onchange="updateGrowthPlan(6,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_6_Silver" type="number" min="0" value="9" onchange="updateGrowthPlan(6,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_6_Momentum" type="number" min="0" value="11" onchange="updateGrowthPlan(6,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_6_Growth" type="number" min="0" value="8" onchange="updateGrowthPlan(6,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">47</td>
+    </tr><tr>
+      <td>Aug 2026</td>
+      
+      <td><input class="growth-input" id="gp_7_Enterprise" type="number" min="0" value="10" onchange="updateGrowthPlan(7,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_7_Gold" type="number" min="0" value="9" onchange="updateGrowthPlan(7,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_7_Silver" type="number" min="0" value="7" onchange="updateGrowthPlan(7,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_7_Momentum" type="number" min="0" value="10" onchange="updateGrowthPlan(7,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_7_Growth" type="number" min="0" value="6" onchange="updateGrowthPlan(7,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">42</td>
+    </tr><tr>
+      <td>Sep 2026</td>
+      
+      <td><input class="growth-input" id="gp_8_Enterprise" type="number" min="0" value="10" onchange="updateGrowthPlan(8,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_8_Gold" type="number" min="0" value="11" onchange="updateGrowthPlan(8,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_8_Silver" type="number" min="0" value="9" onchange="updateGrowthPlan(8,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_8_Momentum" type="number" min="0" value="9" onchange="updateGrowthPlan(8,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_8_Growth" type="number" min="0" value="8" onchange="updateGrowthPlan(8,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">47</td>
+    </tr><tr>
+      <td>Oct 2026</td>
+      
+      <td><input class="growth-input" id="gp_9_Enterprise" type="number" min="0" value="11" onchange="updateGrowthPlan(9,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_9_Gold" type="number" min="0" value="13" onchange="updateGrowthPlan(9,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_9_Silver" type="number" min="0" value="10" onchange="updateGrowthPlan(9,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_9_Momentum" type="number" min="0" value="11" onchange="updateGrowthPlan(9,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_9_Growth" type="number" min="0" value="9" onchange="updateGrowthPlan(9,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">54</td>
+    </tr><tr>
+      <td>Nov 2026</td>
+      
+      <td><input class="growth-input" id="gp_10_Enterprise" type="number" min="0" value="13" onchange="updateGrowthPlan(10,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_10_Gold" type="number" min="0" value="12" onchange="updateGrowthPlan(10,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_10_Silver" type="number" min="0" value="10" onchange="updateGrowthPlan(10,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_10_Momentum" type="number" min="0" value="14" onchange="updateGrowthPlan(10,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_10_Growth" type="number" min="0" value="9" onchange="updateGrowthPlan(10,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">58</td>
+    </tr><tr>
+      <td>Dec 2026</td>
+      
+      <td><input class="growth-input" id="gp_11_Enterprise" type="number" min="0" value="15" onchange="updateGrowthPlan(11,'Enterprise',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_11_Gold" type="number" min="0" value="15" onchange="updateGrowthPlan(11,'Gold',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_11_Silver" type="number" min="0" value="10" onchange="updateGrowthPlan(11,'Silver',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_11_Momentum" type="number" min="0" value="14" onchange="updateGrowthPlan(11,'Momentum',this.value)"></td>
+    
+      <td><input class="growth-input" id="gp_11_Growth" type="number" min="0" value="9" onchange="updateGrowthPlan(11,'Growth',this.value)"></td>
+    
+      <td style="font-weight:700;color:var(--accent2)">63</td>
+    </tr><tr class="growth-total-row">
+    <td>TOTAL</td>
+    <td id="gp_total_Enterprise">100</td><td id="gp_total_Gold">132</td><td id="gp_total_Silver">98</td><td id="gp_total_Momentum">119</td><td id="gp_total_Growth">85</td>
+    <td id="gp_grand_total">534</td>
+  </tr></tbody>
         </table>
       </div>
     </div>
@@ -657,22 +2148,22 @@
     <div class="two-col">
       <div class="card">
         <div class="card-title">New Accounts per Month by Segment</div>
-        <div class="chart-wrap"><canvas id="chartGrowthNew"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartGrowthNew" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
       <div class="card">
         <div class="card-title">Cumulative Active Accounts by Segment</div>
-        <div class="chart-wrap"><canvas id="chartGrowthCumul"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartGrowthCumul" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
       </div>
     </div>
 
     <div class="card">
       <div class="card-title">Monthly Capacity Impact: Base vs. Onboarding vs. Recurring New Volume</div>
-      <div class="chart-wrap-lg"><canvas id="chartGrowthCapacity"></canvas></div>
+      <div class="chart-wrap-lg"><canvas id="chartGrowthCapacity" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
 
     <div class="card">
       <div class="card-title">Utilization With vs. Without Growth — Full Year</div>
-      <div class="chart-wrap"><canvas id="chartGrowthUtil"></canvas></div>
+      <div class="chart-wrap"><canvas id="chartGrowthUtil" style="box-sizing: border-box; display: block; height: 0px; width: 0px;" width="0" height="0"></canvas></div>
     </div>
 
     <!-- Monthly breakdown table -->
@@ -696,7 +2187,391 @@
               <th>Flag</th>
             </tr>
           </thead>
-          <tbody id="growthDetailBody"></tbody>
+          <tbody id="growthDetailBody">
+    <tr style="">
+      <td><strong>Jan 2026</strong></td>
+      <td class="num"><strong>+24</strong></td>
+      <td class="num"><span class="tip" data-tip="24 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 49.7 onboarding hrs">49.7</span></td>
+      <td class="num"><span class="tip" data-tip="24 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.01 seasonal index
+= 25.9 recurring hrs">25.9</span></td>
+      <td class="num"><strong><span class="tip" data-tip="49.7 onboarding hrs
++ 25.9 recurring order hrs
+= 75.5 incremental hrs from growth">75.5</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">793.0</span></td>
+      <td class="num"><strong><span class="tip" data-tip="793.0 base + 75.5 growth
+= 868.6 total required hrs">868.6</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 868.6 req
+= +323.0 hrs">+323.0</span></td>
+      <td class="num"><strong><span class="tip" data-tip="868.6 req ÷ 1,191.5 avail
+= 72.9%
+
+Includes growth plan new account volume">72.9%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+793.0 req ÷ 1,191.5 avail
+= 66.6%">66.6%</span></td>
+      <td><span class="flag flag-ok">🟢 Healthy</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Feb 2026</strong></td>
+      <td class="num"><strong>+35</strong></td>
+      <td class="num"><span class="tip" data-tip="35 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 72.7 onboarding hrs">72.7</span></td>
+      <td class="num"><span class="tip" data-tip="59 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.22 seasonal index
+= 79.6 recurring hrs">79.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="72.7 onboarding hrs
++ 79.6 recurring order hrs
+= 152.3 incremental hrs from growth">152.3</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">914.5</span></td>
+      <td class="num"><strong><span class="tip" data-tip="914.5 base + 152.3 growth
+= 1,066.8 total required hrs">1,066.8</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,066.8 req
+= +124.7 hrs">+124.7</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,066.8 req ÷ 1,191.5 avail
+= 89.5%
+
+Includes growth plan new account volume">89.5%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+914.5 req ÷ 1,191.5 avail
+= 76.8%">76.8%</span></td>
+      <td><span class="flag flag-over">🔴 At Risk 85%+</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Mar 2026</strong></td>
+      <td class="num"><strong>+36</strong></td>
+      <td class="num"><span class="tip" data-tip="36 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 74.5 onboarding hrs">74.5</span></td>
+      <td class="num"><span class="tip" data-tip="95 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.17 seasonal index
+= 120.8 recurring hrs">120.8</span></td>
+      <td class="num"><strong><span class="tip" data-tip="74.5 onboarding hrs
++ 120.8 recurring order hrs
+= 195.4 incremental hrs from growth">195.4</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">885.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="885.6 base + 195.4 growth
+= 1,081.0 total required hrs">1,081.0</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,081.0 req
+= +110.6 hrs">+110.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,081.0 req ÷ 1,191.5 avail
+= 90.7%
+
+Includes growth plan new account volume">90.7%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+885.6 req ÷ 1,191.5 avail
+= 74.3%">74.3%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fff8e6">
+      <td><strong>Apr 2026</strong></td>
+      <td class="num"><strong>+38</strong></td>
+      <td class="num"><span class="tip" data-tip="38 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 78.7 onboarding hrs">78.7</span></td>
+      <td class="num"><span class="tip" data-tip="133 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 0.86 seasonal index
+= 123.1 recurring hrs">123.1</span></td>
+      <td class="num"><strong><span class="tip" data-tip="78.7 onboarding hrs
++ 123.1 recurring order hrs
+= 201.8 incremental hrs from growth">201.8</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">706.3</span></td>
+      <td class="num"><strong><span class="tip" data-tip="706.3 base + 201.8 growth
+= 908.1 total required hrs">908.1</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 908.1 req
+= +283.4 hrs">+283.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="908.1 req ÷ 1,191.5 avail
+= 76.2%
+
+Includes growth plan new account volume">76.2%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+706.3 req ÷ 1,191.5 avail
+= 59.3%">59.3%</span></td>
+      <td><span class="flag flag-warn">🟡 Caution</span></td>
+    </tr>
+    <tr style="background:#fff8e6">
+      <td><strong>May 2026</strong></td>
+      <td class="num"><strong>+43</strong></td>
+      <td class="num"><span class="tip" data-tip="43 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 88.7 onboarding hrs">88.7</span></td>
+      <td class="num"><span class="tip" data-tip="176 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 0.86 seasonal index
+= 161.1 recurring hrs">161.1</span></td>
+      <td class="num"><strong><span class="tip" data-tip="88.7 onboarding hrs
++ 161.1 recurring order hrs
+= 249.8 incremental hrs from growth">249.8</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">706.3</span></td>
+      <td class="num"><strong><span class="tip" data-tip="706.3 base + 249.8 growth
+= 956.1 total required hrs">956.1</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 956.1 req
+= +235.5 hrs">+235.5</span></td>
+      <td class="num"><strong><span class="tip" data-tip="956.1 req ÷ 1,191.5 avail
+= 80.2%
+
+Includes growth plan new account volume">80.2%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+706.3 req ÷ 1,191.5 avail
+= 59.3%">59.3%</span></td>
+      <td><span class="flag flag-warn">🟡 Caution</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Jun 2026</strong></td>
+      <td class="num"><strong>+47</strong></td>
+      <td class="num"><span class="tip" data-tip="47 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 97.2 onboarding hrs">97.2</span></td>
+      <td class="num"><span class="tip" data-tip="223 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 0.89 seasonal index
+= 209.1 recurring hrs">209.1</span></td>
+      <td class="num"><strong><span class="tip" data-tip="97.2 onboarding hrs
++ 209.1 recurring order hrs
+= 306.3 incremental hrs from growth">306.3</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">723.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="723.6 base + 306.3 growth
+= 1,029.9 total required hrs">1,029.9</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,029.9 req
+= +161.6 hrs">+161.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,029.9 req ÷ 1,191.5 avail
+= 86.4%
+
+Includes growth plan new account volume">86.4%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+723.6 req ÷ 1,191.5 avail
+= 60.7%">60.7%</span></td>
+      <td><span class="flag flag-over">🔴 At Risk 85%+</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Jul 2026</strong></td>
+      <td class="num"><strong>+47</strong></td>
+      <td class="num"><span class="tip" data-tip="47 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 97.4 onboarding hrs">97.4</span></td>
+      <td class="num"><span class="tip" data-tip="270 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.02 seasonal index
+= 289.2 recurring hrs">289.2</span></td>
+      <td class="num"><strong><span class="tip" data-tip="97.4 onboarding hrs
++ 289.2 recurring order hrs
+= 386.6 incremental hrs from growth">386.6</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">798.8</span></td>
+      <td class="num"><strong><span class="tip" data-tip="798.8 base + 386.6 growth
+= 1,185.4 total required hrs">1,185.4</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#2ecc71"><span class="tip" data-tip="1,191.5 avail − 1,185.4 req
+= +6.1 hrs">+6.1</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,185.4 req ÷ 1,191.5 avail
+= 99.5%
+
+Includes growth plan new account volume">99.5%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+798.8 req ÷ 1,191.5 avail
+= 67.0%">67.0%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Aug 2026</strong></td>
+      <td class="num"><strong>+42</strong></td>
+      <td class="num"><span class="tip" data-tip="42 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 88.2 onboarding hrs">88.2</span></td>
+      <td class="num"><span class="tip" data-tip="312 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.04 seasonal index
+= 341.4 recurring hrs">341.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="88.2 onboarding hrs
++ 341.4 recurring order hrs
+= 429.5 incremental hrs from growth">429.5</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">810.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="810.4 base + 429.5 growth
+= 1,239.9 total required hrs">1,239.9</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,239.9 req
+= -48.4 hrs">-48.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,239.9 req ÷ 1,191.5 avail
+= 104.1%
+
+Includes growth plan new account volume">104.1%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+810.4 req ÷ 1,191.5 avail
+= 68.0%">68.0%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Sep 2026</strong></td>
+      <td class="num"><strong>+47</strong></td>
+      <td class="num"><span class="tip" data-tip="47 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 98.2 onboarding hrs">98.2</span></td>
+      <td class="num"><span class="tip" data-tip="359 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.04 seasonal index
+= 393.6 recurring hrs">393.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="98.2 onboarding hrs
++ 393.6 recurring order hrs
+= 491.8 incremental hrs from growth">491.8</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">810.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="810.4 base + 491.8 growth
+= 1,302.2 total required hrs">1,302.2</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,302.2 req
+= -110.7 hrs">-110.7</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,302.2 req ÷ 1,191.5 avail
+= 109.3%
+
+Includes growth plan new account volume">109.3%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+810.4 req ÷ 1,191.5 avail
+= 68.0%">68.0%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Oct 2026</strong></td>
+      <td class="num"><strong>+54</strong></td>
+      <td class="num"><span class="tip" data-tip="54 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 112.7 onboarding hrs">112.7</span></td>
+      <td class="num"><span class="tip" data-tip="413 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.01 seasonal index
+= 440.4 recurring hrs">440.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="112.7 onboarding hrs
++ 440.4 recurring order hrs
+= 553.1 incremental hrs from growth">553.1</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">793.0</span></td>
+      <td class="num"><strong><span class="tip" data-tip="793.0 base + 553.1 growth
+= 1,346.2 total required hrs">1,346.2</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,346.2 req
+= -154.6 hrs">-154.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,346.2 req ÷ 1,191.5 avail
+= 113.0%
+
+Includes growth plan new account volume">113.0%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+793.0 req ÷ 1,191.5 avail
+= 66.6%">66.6%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Nov 2026</strong></td>
+      <td class="num"><strong>+58</strong></td>
+      <td class="num"><span class="tip" data-tip="58 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 121.3 onboarding hrs">121.3</span></td>
+      <td class="num"><span class="tip" data-tip="471 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.06 seasonal index
+= 526.6 recurring hrs">526.6</span></td>
+      <td class="num"><strong><span class="tip" data-tip="121.3 onboarding hrs
++ 526.6 recurring order hrs
+= 647.9 incremental hrs from growth">647.9</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">822.0</span></td>
+      <td class="num"><strong><span class="tip" data-tip="822.0 base + 647.9 growth
+= 1,469.8 total required hrs">1,469.8</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,469.8 req
+= -278.3 hrs">-278.3</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,469.8 req ÷ 1,191.5 avail
+= 123.4%
+
+Includes growth plan new account volume">123.4%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+822.0 req ÷ 1,191.5 avail
+= 69.0%">69.0%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr>
+    <tr style="background:#fdecea">
+      <td><strong>Dec 2026</strong></td>
+      <td class="num"><strong>+63</strong></td>
+      <td class="num"><span class="tip" data-tip="63 new accounts × pharma co setup (15 min each)
++ portal setup per account
+= 132.5 onboarding hrs">132.5</span></td>
+      <td class="num"><span class="tip" data-tip="534 cumulative new accts
+× avg orders/mo per segment
+× avg pharma co/order per segment
+× 10 min/pharma co ÷ 60
+× 1.05 seasonal index
+= 593.4 recurring hrs">593.4</span></td>
+      <td class="num"><strong><span class="tip" data-tip="132.5 onboarding hrs
++ 593.4 recurring order hrs
+= 725.9 incremental hrs from growth">725.9</span></strong></td>
+      <td class="num"><span class="tip" data-tip="Required hours from base model
+(existing accounts, fixed ops, account setup)
+excluding growth plan new accounts">816.2</span></td>
+      <td class="num"><strong><span class="tip" data-tip="816.2 base + 725.9 growth
+= 1,542.0 total required hrs">1,542.0</span></strong></td>
+      <td class="num">1,191.5</td>
+      <td class="num" style="color:#e74c3c"><span class="tip" data-tip="1,191.5 avail − 1,542.0 req
+= -350.5 hrs">-350.5</span></td>
+      <td class="num"><strong><span class="tip" data-tip="1,542.0 req ÷ 1,191.5 avail
+= 129.4%
+
+Includes growth plan new account volume">129.4%</span></strong></td>
+      <td class="num" style="color:var(--muted)"><span class="tip" data-tip="Base utilization without growth plan
+816.2 req ÷ 1,191.5 avail
+= 68.5%">68.5%</span></td>
+      <td><span class="flag flag-over">🚨 Over 90%</span></td>
+    </tr></tbody>
         </table>
       </div>
     </div>
@@ -705,7 +2580,7 @@
   <!-- ══════════════════════════════════════
        PANEL: ASSUMPTIONS
   ══════════════════════════════════════ -->
-  <div class="panel" id="panel-assumptions">
+  <div class="panel active" id="panel-assumptions">
     <div style="margin-bottom:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <button class="recalc-btn" onclick="recalculate()">⟳ Recalculate All</button>
       <button class="reset-btn" onclick="resetAssumptions()">↺ Reset to Defaults</button>
@@ -767,7 +2642,7 @@
         <div class="assume-row"><div><div class="assume-label">Shopify Sweeps/Day</div></div><input class="assume-input" id="f_shopifySweeps" type="number" value="1" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Shopify Sweep (min/sweep)</div></div><input class="assume-input" id="f_shopifyMins" type="number" value="20" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Handoff OAs/Day</div></div><input class="assume-input" id="f_handoffOAs" type="number" value="8" onchange="recalculate()"></div>
-        <div class="assume-row"><div><div class="assume-label">Handoff (min/OA/day)</div></div><input class="assume-input" id="f_handoffMins" type="number" value="10" onchange="recalculate()"></div>
+        <div class="assume-row"><div><div class="assume-label">Handoff (min/OA/day)</div></div><input class="assume-input" id="f_handoffMins" type="number" value="5" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Merz Runs/Week</div></div><input class="assume-input" id="f_merzRuns" type="number" value="1" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Merz (min/run)</div></div><input class="assume-input" id="f_merzMins" type="number" value="60" onchange="recalculate()"></div>
         <div class="assume-row"><div><div class="assume-label">Portal Checks/Day</div></div><input class="assume-input" id="f_portalChecks" type="number" value="1" onchange="recalculate()"></div>
@@ -1900,19 +3775,90 @@ const GROWTH_SEGS = ['Enterprise','Gold','Silver','Momentum','Growth'];
 // Pre-populated from GSheet "Monthly Targets" tab (rows 403-409)
 // Mapping: Beginner→Momentum, Experienced→Gold
 let growthPlan = [
-  // Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
-  { Enterprise: 3,  Gold: 8,  Silver: 3,  Momentum: 6,  Growth: 4  }, // Jan
-  { Enterprise: 4,  Gold: 13, Silver: 8,  Momentum: 6,  Growth: 4  }, // Feb
-  { Enterprise: 6,  Gold: 9,  Silver: 8,  Momentum: 6,  Growth: 7  }, // Mar
-  { Enterprise: 6,  Gold: 10, Silver: 7,  Momentum: 9,  Growth: 6  }, // Apr
-  { Enterprise: 6,  Gold: 11, Silver: 8,  Momentum: 11, Growth: 7  }, // May
-  { Enterprise: 8,  Gold: 10, Silver: 9,  Momentum: 12, Growth: 8  }, // Jun
-  { Enterprise: 8,  Gold: 11, Silver: 9,  Momentum: 11, Growth: 8  }, // Jul
-  { Enterprise: 10, Gold: 9,  Silver: 7,  Momentum: 10, Growth: 6  }, // Aug
-  { Enterprise: 10, Gold: 11, Silver: 9,  Momentum: 9,  Growth: 8  }, // Sep
-  { Enterprise: 11, Gold: 13, Silver: 10, Momentum: 11, Growth: 9  }, // Oct
-  { Enterprise: 13, Gold: 12, Silver: 10, Momentum: 14, Growth: 9  }, // Nov
-  { Enterprise: 15, Gold: 15, Silver: 10, Momentum: 14, Growth: 9  }, // Dec
+  {
+    "Enterprise": 3,
+    "Gold": 8,
+    "Silver": 3,
+    "Momentum": 6,
+    "Growth": 4
+  },
+  {
+    "Enterprise": 4,
+    "Gold": 13,
+    "Silver": 8,
+    "Momentum": 6,
+    "Growth": 4
+  },
+  {
+    "Enterprise": 6,
+    "Gold": 9,
+    "Silver": 8,
+    "Momentum": 6,
+    "Growth": 7
+  },
+  {
+    "Enterprise": 6,
+    "Gold": 10,
+    "Silver": 7,
+    "Momentum": 9,
+    "Growth": 6
+  },
+  {
+    "Enterprise": 6,
+    "Gold": 11,
+    "Silver": 8,
+    "Momentum": 11,
+    "Growth": 7
+  },
+  {
+    "Enterprise": 8,
+    "Gold": 10,
+    "Silver": 9,
+    "Momentum": 12,
+    "Growth": 8
+  },
+  {
+    "Enterprise": 8,
+    "Gold": 11,
+    "Silver": 9,
+    "Momentum": 11,
+    "Growth": 8
+  },
+  {
+    "Enterprise": 10,
+    "Gold": 9,
+    "Silver": 7,
+    "Momentum": 10,
+    "Growth": 6
+  },
+  {
+    "Enterprise": 10,
+    "Gold": 11,
+    "Silver": 9,
+    "Momentum": 9,
+    "Growth": 8
+  },
+  {
+    "Enterprise": 11,
+    "Gold": 13,
+    "Silver": 10,
+    "Momentum": 11,
+    "Growth": 9
+  },
+  {
+    "Enterprise": 13,
+    "Gold": 12,
+    "Silver": 10,
+    "Momentum": 14,
+    "Growth": 9
+  },
+  {
+    "Enterprise": 15,
+    "Gold": 15,
+    "Silver": 10,
+    "Momentum": 14,
+    "Growth": 9
+  }
 ]; // Totals: 100 / 132 / 98 / 119 / 85 = 534 new accounts YTD
 
 function getGrowthAssumptions() {
@@ -2435,7 +4381,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 <!-- Fixed-position tooltip — repositions above or below based on available viewport space -->
-<div id="calcTooltip"></div>
+<div id="calcTooltip" style="display: none;"></div>
 <script>
 (function() {
   const tt = document.getElementById('calcTooltip');
@@ -2500,5 +4446,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }, true);
 })();
 </script>
-</body>
-</html>
+
+
+<div id="1p-menu-live-region" role="status" aria-live="polite" aria-atomic="true" aria-relevant="all" style="clip: rect(0px, 0px, 0px, 0px); clip-path: inset(50%); height: 1px; overflow: hidden; position: fixed; top: 0px; left: 0px; white-space: nowrap; width: 1px; overflow-wrap: normal;">1Password menu is available. Press down arrow to select.</div></body></html>
