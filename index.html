@@ -709,6 +709,7 @@
     <div style="margin-bottom:16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <button class="recalc-btn" onclick="recalculate()">⟳ Recalculate All</button>
       <button class="reset-btn" onclick="resetAssumptions()">↺ Reset to Defaults</button>
+      <button class="recalc-btn" style="background:#27ae60;border-color:#27ae60;" onclick="downloadAsMaster()">📤 Save as Master</button>
       <span style="font-size:12px;color:var(--muted)">Yellow fields are editable inputs · All calculations update in real time</span>
     </div>
     <div class="assumptions-wrap">
@@ -2253,6 +2254,52 @@ function resetAssumptions() {
   };
   Object.entries(defaults).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
   recalculate();
+}
+
+// ═══════════════════════════════════════════════════
+//  SAVE AS MASTER — bakes current values into HTML
+//  and downloads index.html for pushing to GitHub
+// ═══════════════════════════════════════════════════
+function downloadAsMaster() {
+  // 1. Bake every tracked input's current value into its HTML attribute
+  TRACKED_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.setAttribute('value', el.value);
+  });
+
+  // 2. Also bake any growth-plan row inputs (not in TRACKED_IDS)
+  document.querySelectorAll('#growthAssumptionsBody input, #growthPlanBody input').forEach(el => {
+    if (el.id) el.setAttribute('value', el.value);
+  });
+
+  // 3. Serialize the current DOM
+  let html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+  // 4. Bake the current growthPlan array into the JS source so defaults
+  //    are correct even before DOMContentLoaded restores values
+  try {
+    const gpStr = 'let growthPlan = ' + JSON.stringify(growthPlan, null, 2) + ';';
+    html = html.replace(/let growthPlan\s*=\s*\[[\s\S]*?\];/, gpStr);
+  } catch(e) { /* growthPlan may not be serialisable — skip */ }
+
+  // 5. Trigger download
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+
+  // 6. Brief confirmation
+  const btn = event && event.target;
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Downloaded!';
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+  }
 }
 
 // ═══════════════════════════════════════════════════
